@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SysFolgas – Controle de Ausências</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ════════════════════════════════════════════
+   DESIGN TOKENS
+════════════════════════════════════════════ */
+:root,
+[data-theme="dark"]{
+  --bg:        #0b0d12;
+  --surface:   #13161e;
+  --surface2:  #191d28;
+  --surface3:  #20253a;
+  --border:    #272d44;
+  --accent:    #4f8ef7;
+  --accent2:   #2ee8c4;
+  --accent3:   #f5c542;
+  --danger:    #f5615e;
+  --success:   #3dd68c;
+  --warn:      #f5a742;
+  --text:      #e9ecf5;
+  --text2:     #828ba8;
+  --text3:     #4e5470;
+  --sidebar-w: 280px;
+  --topbar-h:  66px;
+  --radius:    12px;
+  --shadow:    0 4px 28px rgba(0,0,0,.5);
+}
+[data-theme="light"]{
+  --bg:        #eef1f8;
+  --surface:   #ffffff;
+  --surface2:  #f3f5fb;
+  --surface3:  #e6eaf5;
+  --border:    #d8ddef;
+  --accent:    #2f6fe8;
+  --accent2:   #089e88;
+  --accent3:   #c8900d;
+  --danger:    #d93535;
+  --success:   #178c58;
+  --warn:      #c87e0d;
+  --text:      #141928;
+  --text2:     #525d7a;
+  --text3:     #8a93ae;
+  --shadow:    0 2px 14px rgba(0,0,0,.09);
+}
+
+/* ════ BASE ════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);transition:background .22s,color .22s;font-size:15px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px}
+
+/* ════ THEME TOGGLE ════ */
+.theme-btn{
+  width:38px;height:38px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface2);cursor:pointer;display:inline-flex;align-items:center;
+  justify-content:center;font-size:17px;transition:background .18s;flex-shrink:0;
+}
+.theme-btn:hover{background:var(--surface3)}
+
+/* ════════════════════════════════════════════
+   AUTH SCREEN
+════════════════════════════════════════════ */
+#auth-screen{
+  display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:radial-gradient(ellipse 70% 55% at 50% 0%,var(--surface3) 0%,var(--bg) 68%);
+  transition:background .22s;
+}
+.auth-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:22px;padding:52px 48px;width:440px;max-width:96vw;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.auth-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+}
+.auth-top{position:absolute;top:16px;right:16px}
+.auth-logo{display:flex;align-items:center;gap:14px;margin-bottom:38px}
+.auth-logo-icon{
+  width:46px;height:46px;border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;
+}
+.auth-logo h1{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.6px;color:var(--text)}
+.auth-logo span{color:var(--text2);font-size:12.5px;display:block;font-weight:400}
+.auth-tabs{display:flex;gap:4px;margin-bottom:30px;background:var(--surface2);border-radius:11px;padding:4px}
+.auth-tab{
+  flex:1;padding:10px;border:none;background:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+  color:var(--text2);border-radius:9px;transition:all .2s;
+}
+.auth-tab.active{background:var(--surface3);color:var(--text)}
+.auth-form{display:flex;flex-direction:column;gap:18px}
+.ff{display:flex;flex-direction:column;gap:7px}
+.ff label{font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.4px;text-transform:uppercase}
+.ff input,.ff select,.ff textarea,
+.form-field input,.form-field select,.form-field textarea{
+  background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:12px 15px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;
+  outline:none;transition:border-color .2s,box-shadow .2s;width:100%;
+}
+.ff input:focus,.ff select:focus,.ff textarea:focus,
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,142,247,.14);
+}
+.ff select option,.form-field select option{background:var(--surface);color:var(--text)}
+.ff textarea,.form-field textarea{resize:vertical;min-height:84px}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),#2d65d8);border:none;border-radius:10px;
+  padding:14px;color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;
+  cursor:pointer;transition:opacity .2s,transform .1s;margin-top:4px;
+}
+.btn-primary:hover{opacity:.9}
+.btn-primary:active{transform:scale(.99)}
+.btn-secondary{
+  background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:11px 20px;color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;cursor:pointer;transition:background .18s;
+}
+.btn-secondary:hover{background:var(--surface3)}
+.auth-msg{font-size:13px;padding:10px 13px;border-radius:9px;text-align:center;display:none}
+.auth-msg.error {background:rgba(245,97,94,.1); color:var(--danger); border:1px solid rgba(245,97,94,.25);display:block}
+.auth-msg.success{background:rgba(61,214,140,.08);color:var(--success);border:1px solid rgba(61,214,140,.22);display:block}
+.admin-hint{
+  margin-top:22px;padding:13px 15px;background:rgba(79,142,247,.06);
+  border:1px dashed rgba(79,142,247,.28);border-radius:11px;
+  font-size:12.5px;color:var(--text2);line-height:1.7;
+}
+.admin-hint strong{color:var(--accent)}
+
+/* ════════════════════════════════════════════
+   APP SHELL — optimised for 1920×1080
+════════════════════════════════════════════ */
+#app{display:none;height:100vh;overflow:hidden}
+.layout{display:flex;height:100%}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;
+  padding:28px 0;transition:background .22s,border-color .22s;
+}
+.sidebar-logo{padding:0 24px 32px;display:flex;align-items:center;gap:12px}
+.sb-icon{
+  width:40px;height:40px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+}
+.sb-text h2{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.sb-text span{font-size:11.5px;color:var(--text3);font-weight:400}
+.sidebar-section-label{
+  font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--text3);padding:0 24px;margin:16px 0 6px;
+}
+.sidebar-nav{flex:1;padding:0 14px;display:flex;flex-direction:column;gap:3px}
+.nav-item{
+  display:flex;align-items:center;gap:13px;padding:11px 14px;
+  border-radius:10px;cursor:pointer;transition:all .18s;
+  color:var(--text2);font-size:14.5px;font-weight:500;
+  border:none;background:none;text-align:left;width:100%;
+}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{
+  background:linear-gradient(135deg,rgba(79,142,247,.16),rgba(46,232,196,.07));
+  color:var(--accent);
+}
+.nav-item .icon{font-size:18px;width:24px;text-align:center;flex-shrink:0}
+.nav-badge{
+  margin-left:auto;font-size:11px;font-weight:700;
+  background:rgba(79,142,247,.18);color:var(--accent);
+  border-radius:20px;padding:2px 8px;
+}
+.nav-divider{height:1px;background:var(--border);margin:10px 14px}
+.sidebar-bottom{padding:0 14px;display:flex;flex-direction:column;gap:3px}
+.user-card{
+  padding:14px 16px;background:var(--surface2);border-radius:11px;
+  margin:0 14px 12px;border:1px solid var(--border);
+}
+.user-card-avatar{
+  width:36px;height:36px;border-radius:9px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.user-card-info{flex:1;min-width:0}
+.user-card-name{font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-card-email{font-size:11.5px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-badge{
+  font-size:10px;padding:2px 9px;background:rgba(79,142,247,.14);
+  color:var(--accent);border-radius:20px;display:inline-block;margin-top:5px;font-weight:600;
+}
+
+/* ── MAIN ── */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.topbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  height:var(--topbar-h);padding:0 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;transition:background .22s,border-color .22s;
+}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text)}
+.topbar-sub{font-size:13px;color:var(--text3);font-weight:400}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.content{flex:1;overflow:auto;padding:36px 40px}
+
+/* ════════════════════════════════════════════
+   DASHBOARD — 6 stat cards
+════════════════════════════════════════════ */
+.stats-row{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:18px;margin-bottom:28px;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:22px 24px;position:relative;overflow:hidden;
+  transition:background .22s,border-color .22s,transform .18s;cursor:default;
+}
+.stat-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;}
+.stat-card:nth-child(1)::after{background:linear-gradient(90deg,var(--accent),transparent)}
+.stat-card:nth-child(2)::after{background:linear-gradient(90deg,var(--accent2),transparent)}
+.stat-card:nth-child(3)::after{background:linear-gradient(90deg,var(--accent3),transparent)}
+.stat-card:nth-child(4)::after{background:linear-gradient(90deg,var(--danger),transparent)}
+.stat-card:nth-child(5)::after{background:linear-gradient(90deg,var(--success),transparent)}
+.stat-card:nth-child(6)::after{background:linear-gradient(90deg,var(--warn),transparent)}
+.stat-icon{font-size:26px;margin-bottom:12px;display:block;line-height:1}
+.stat-label{font-size:11.5px;color:var(--text2);font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-family:'Syne',sans-serif;font-size:34px;font-weight:800;color:var(--text);line-height:1}
+.stat-sub{font-size:12px;color:var(--text3);margin-top:6px}
+
+/* dashboard 2-col bottom */
+.dash-bottom{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+
+/* ════════════════════════════════════════════
+   CARDS
+════════════════════════════════════════════ */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  transition:background .22s,border-color .22s;
+}
+.card-header{
+  padding:20px 26px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)}
+.card-title-sm{font-size:14px}
+.card-body{padding:24px 26px}
+
+/* ════════════════════════════════════════════
+   TABLE
+════════════════════════════════════════════ */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead tr{background:var(--surface2)}
+th{
+  text-align:left;padding:12px 16px;font-size:11.5px;font-weight:700;
+  color:var(--text3);letter-spacing:.5px;text-transform:uppercase;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{
+  padding:15px 16px;border-bottom:1px solid var(--border);
+  color:var(--text);vertical-align:middle;
+}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(128,128,128,.035)}
+.td-name{font-weight:600}
+.td-muted{color:var(--text2);font-size:13px}
+.badge{
+  display:inline-flex;align-items:center;padding:4px 11px;
+  border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.15px;white-space:nowrap;
+}
+[data-theme="dark"] .badge-blue  {background:rgba(79,142,247,.16);color:#7ab8ff}
+[data-theme="dark"] .badge-teal  {background:rgba(46,232,196,.13);color:#2ee8c4}
+[data-theme="dark"] .badge-yellow{background:rgba(245,197,66,.14);color:#f5c542}
+[data-theme="dark"] .badge-red   {background:rgba(245,97,94,.13); color:#f5847f}
+[data-theme="dark"] .badge-purple{background:rgba(172,120,255,.14);color:#c09aff}
+[data-theme="dark"] .badge-gray  {background:rgba(130,139,168,.14);color:#828ba8}
+[data-theme="light"] .badge-blue  {background:rgba(47,111,232,.11);color:#2f6fe8}
+[data-theme="light"] .badge-teal  {background:rgba(8,158,136,.10); color:#089e88}
+[data-theme="light"] .badge-yellow{background:rgba(200,144,13,.12); color:#c8900d}
+[data-theme="light"] .badge-red   {background:rgba(217,53,53,.10);  color:#d93535}
+[data-theme="light"] .badge-purple{background:rgba(144,90,200,.10); color:#905ac8}
+[data-theme="light"] .badge-gray  {background:rgba(82,93,122,.10);  color:#525d7a}
+.row-actions{display:flex;gap:7px}
+.btn-xs{
+  padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:600;
+  cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .18s;
+}
+.btn-edit{background:rgba(79,142,247,.12);color:var(--accent)}
+.btn-edit:hover{background:rgba(79,142,247,.24)}
+.btn-del {background:rgba(245,97,94,.11); color:var(--danger)}
+.btn-del:hover {background:rgba(245,97,94,.22)}
+
+/* ════════════════════════════════════════════
+   RELATÓRIO — 2-col on 1920
+════════════════════════════════════════════ */
+.rel-page{display:flex;flex-direction:column;gap:0;height:100%}
+
+.filters-bar{
+  display:flex;gap:14px;align-items:flex-end;flex-wrap:nowrap;
+  padding:20px 28px;background:var(--surface2);border-bottom:1px solid var(--border);
+  transition:background .22s,border-color .22s;flex-shrink:0;
+}
+.filter-group{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.filter-label{font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+.filter-group input,.filter-group select{
+  background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:14px;outline:none;transition:border-color .2s;
+}
+.filter-group input{min-width:150px}
+.filter-group select{min-width:165px}
+.filter-group input:focus,.filter-group select:focus{border-color:var(--accent)}
+.btn-filter{
+  padding:10px 22px;border-radius:9px;border:none;
+  background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s;
+  white-space:nowrap;flex-shrink:0;
+}
+.btn-filter:hover{opacity:.88}
+.btn-excel{
+  padding:10px 20px;border-radius:9px;
+  background:rgba(61,214,140,.1);color:var(--success);
+  border:1px solid rgba(61,214,140,.24);
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px;
+  white-space:nowrap;flex-shrink:0;
+}
+.btn-excel:hover{background:rgba(61,214,140,.2)}
+
+/* 2-column body: chart + table */
+.rel-body{
+  flex:1;display:grid;
+  grid-template-columns:420px 1fr;
+  gap:0;overflow:hidden;
+  min-height:0;
+}
+.rel-chart-panel{
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:24px 22px;overflow:auto;
+  background:var(--surface);
+}
+.rel-table-panel{
+  display:flex;flex-direction:column;
+  overflow:auto;
+  background:var(--surface);
+}
+.chart-title-block{margin-bottom:18px}
+.chart-title-block .card-title{font-size:15px}
+.chart-period{font-size:12.5px;color:var(--text2);margin-top:3px}
+.legend-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.chart-canvas-wrap{
+  flex:1;position:relative;
+  background:var(--surface2);border-radius:12px;
+  border:1px solid var(--border);padding:18px 16px;
+  overflow:hidden;min-height:0;
+}
+.chart-empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.chart-empty .ico{font-size:40px;display:block;margin-bottom:14px;opacity:.35}
+
+/* Minicard summary row in chart panel */
+.motivo-summary{display:flex;flex-direction:column;gap:8px;margin-top:18px}
+.motivo-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-radius:9px;background:var(--surface2);
+  border:1px solid var(--border);font-size:13px;
+}
+.motivo-row-left{display:flex;align-items:center;gap:9px}
+.motivo-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.motivo-row-val{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text)}
+
+/* ════════════════════════════════════════════
+   MODAL
+════════════════════════════════════════════ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(5px);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;width:600px;max-width:96vw;max-height:90vh;
+  overflow-y:auto;box-shadow:0 32px 100px rgba(0,0,0,.5);animation:modalIn .22s ease;
+}
+@keyframes modalIn{from{transform:scale(.93) translateY(12px);opacity:0}to{transform:none;opacity:1}}
+.modal-header{padding:26px 30px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text)}
+.modal-close{width:34px;height:34px;border-radius:9px;border:none;background:var(--surface2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all .18s}
+.modal-close:hover{background:var(--surface3);color:var(--text)}
+.modal-body{padding:28px 30px;display:flex;flex-direction:column;gap:20px}
+.modal-footer{padding:18px 30px;border-top:1px solid var(--border);display:flex;gap:12px;justify-content:flex-end}
+.form-field{display:flex;flex-direction:column;gap:7px}
+.form-field label{font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.4px;text-transform:uppercase}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+
+/* ── TIPO TOGGLE (Integral / Parcial) ── */
+.tipo-toggle{display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.tipo-btn{
+  flex:1;padding:11px 0;border:none;background:var(--surface2);
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+  color:var(--text2);cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.tipo-btn:first-child{border-right:1px solid var(--border)}
+.tipo-btn.active-integral{background:linear-gradient(135deg,rgba(61,214,140,.18),rgba(61,214,140,.08));color:var(--success);font-weight:600}
+.tipo-btn.active-parcial {background:linear-gradient(135deg,rgba(245,197,66,.18),rgba(245,197,66,.08));color:var(--accent3);font-weight:600}
+.tipo-btn:hover:not(.active-integral):not(.active-parcial){background:var(--surface3);color:var(--text)}
+
+/* ── PARTIAL TIME PANEL ── */
+.partial-time-panel{
+  display:none;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:11px;padding:16px 18px;
+  animation:fadeSlide .2s ease;
+}
+.partial-time-panel.visible{display:block}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.partial-time-header{
+  font-size:11.5px;font-weight:700;color:var(--text3);
+  letter-spacing:.4px;text-transform:uppercase;margin-bottom:12px;
+  display:flex;align-items:center;gap:6px;
+}
+.partial-time-header::after{content:'';flex:1;height:1px;background:var(--border)}
+.time-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.time-field{display:flex;flex-direction:column;gap:6px}
+.time-field label{font-size:11.5px;font-weight:600;color:var(--text2);letter-spacing:.3px}
+.time-field input[type="time"]{
+  background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:11px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;
+  outline:none;transition:border-color .2s,box-shadow .2s;width:100%;
+}
+.time-field input[type="time"]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,142,247,.14)}
+.time-duration-tag{
+  margin-top:10px;padding:8px 12px;border-radius:8px;
+  background:rgba(79,142,247,.09);border:1px solid rgba(79,142,247,.2);
+  font-size:13px;color:var(--accent);font-weight:500;
+  display:none;text-align:center;
+}
+.time-duration-tag.visible{display:block}
+
+/* ── TIPO BADGE in table ── */
+.tipo-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;
+  white-space:nowrap;
+}
+.tipo-integral{background:rgba(61,214,140,.1);color:var(--success)}
+.tipo-parcial {background:rgba(245,197,66,.13);color:var(--accent3)}
+
+/* ════ MISC ════ */
+.empty{text-align:center;padding:70px 20px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.4}
+.empty p{font-size:15px}
+#toast-container{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;gap:9px}
+.toast{padding:14px 20px;border-radius:11px;font-size:14px;font-weight:500;max-width:340px;box-shadow:var(--shadow);animation:toastIn .3s ease;display:flex;align-items:center;gap:10px}
+@keyframes toastIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+.toast-success{background:var(--surface);color:var(--success);border:1px solid rgba(61,214,140,.3)}
+.toast-error  {background:var(--surface);color:var(--danger); border:1px solid rgba(245,97,94,.3)}
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--text2);font-size:14px;padding:60px}
+.spin{animation:spin 1s linear infinite;display:inline-block;font-size:22px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#change-pass-panel{display:none}
+#change-pass-panel.visible{display:block}
+.panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(5px);z-index:900;display:flex;align-items:center;justify-content:center}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:420px;max-width:96vw;padding:34px;box-shadow:var(--shadow)}
+.panel h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:22px;color:var(--text)}
+
+/* table header in rel panel */
+.panel-thead{
+  padding:12px 18px;background:var(--surface2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.panel-thead-title{font-size:14px;font-weight:600;color:var(--text2)}
+.panel-count{font-size:12.5px;color:var(--text3)}
+
+/* ════════════════════════════════════════════
+   DASHBOARD FILTERS
+════════════════════════════════════════════ */
+.dash-filter-bar{
+  display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;
+  margin-bottom:20px;padding:18px 24px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);transition:background .22s,border-color .22s;
+}
+.dash-filter-bar .filter-group input,
+.dash-filter-bar .filter-group select{
+  background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:9px 13px;color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:13.5px;outline:none;transition:border-color .2s;
+}
+.dash-filter-bar .filter-group input{min-width:148px}
+.dash-filter-bar .filter-group select{min-width:190px}
+.dash-filter-bar .filter-group input:focus,
+.dash-filter-bar .filter-group select:focus{border-color:var(--accent)}
+.dash-filter-bar .filter-label{font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px}
+.btn-dash-filter{
+  padding:9px 20px;border-radius:9px;border:none;
+  background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:opacity .2s;white-space:nowrap;
+}
+.btn-dash-filter:hover{opacity:.88}
+.btn-clear-dash{
+  padding:9px 16px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;
+  font-size:13.5px;font-weight:500;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.btn-clear-dash:hover{background:var(--surface3);color:var(--text)}
+.dash-context-banner{
+  padding:16px 22px;border-radius:var(--radius);margin-bottom:20px;
+  background:linear-gradient(135deg,rgba(79,142,247,.1),rgba(46,232,196,.06));
+  border:1px solid rgba(79,142,247,.22);
+  display:flex;align-items:center;gap:16px;animation:fadeSlide .25s ease;
+}
+.dash-context-avatar{
+  width:46px;height:46px;border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:0;
+}
+.dash-context-info h3{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)}
+.dash-context-info p{font-size:13px;color:var(--text2);margin-top:3px}
+.dash-context-chips{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.dash-chip{
+  padding:5px 13px;border-radius:20px;font-size:12px;font-weight:700;
+  background:rgba(79,142,247,.14);color:var(--accent);border:1px solid rgba(79,142,247,.22);
+}
+.dash-chip.chip-green{background:rgba(61,214,140,.12);color:var(--success);border-color:rgba(61,214,140,.25)}
+.dash-chip.chip-yellow{background:rgba(245,197,66,.12);color:var(--accent3);border-color:rgba(245,197,66,.25)}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+</style>
+</head>
+<body>
+
+<div id="fb-banner" style="display:none;background:#1a1208;border-bottom:2px solid #f5c542;padding:10px 22px;font-size:13px;color:#f5c542;text-align:center;position:fixed;top:0;left:0;right:0;z-index:9999">
+  ⚠️ <strong>Configure o Firebase:</strong> Localize <code>firebaseConfig</code> no código e substitua pelos dados do seu projeto Firebase.
+</div>
+
+<!-- ═══════════════ AUTH ═══════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-top"><button class="theme-btn" id="auth-theme-btn" onclick="toggleTheme()">🌙</button></div>
+    <div class="auth-logo">
+      <div class="auth-logo-icon">📅</div>
+      <div><h1>SysFolgas</h1><span>Controle de Ausências e Banco de Horas</span></div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login"    onclick="switchAuthTab('login')">Entrar</button>
+      <button class="auth-tab"        id="tab-register" onclick="switchAuthTab('register')">Cadastrar</button>
+    </div>
+    <div id="form-login" class="auth-form">
+      <div class="ff"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"/></div>
+      <div class="ff"><label>Senha</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div id="login-msg" class="auth-msg"></div>
+      <button class="btn-primary" onclick="doLogin()">Entrar no Sistema</button>
+      <div class="admin-hint"><strong>Usuário Admin Padrão:</strong><br/>E-mail: <strong>admin@sysfolgas.com</strong><br/>Senha: <strong>Admin@2024</strong></div>
+    </div>
+    <div id="form-register" class="auth-form" style="display:none">
+      <div class="ff"><label>Nome Completo</label><input type="text" id="reg-name" placeholder="João da Silva"/></div>
+      <div class="ff"><label>E-mail</label><input type="email" id="reg-email" placeholder="seu@email.com"/></div>
+      <div class="ff"><label>Senha (mín. 6 caracteres)</label><input type="password" id="reg-pass" placeholder="••••••••"/></div>
+      <div id="reg-msg" class="auth-msg"></div>
+      <button class="btn-primary" onclick="doRegister()">Criar Conta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP ═══════════════ -->
+<div id="app">
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sb-icon">📅</div>
+        <div class="sb-text"><h2>SysFolgas</h2><span>v2.1 · 1920×1080</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Menu</div>
+        <button class="nav-item active" id="nav-dashboard"   onclick="showPage('dashboard')"><span class="icon">📊</span>Dashboard</button>
+        <button class="nav-item"        id="nav-lancamentos" onclick="showPage('lancamentos')"><span class="icon">📝</span>Lançamentos</button>
+        <button class="nav-item"        id="nav-relatorio"   onclick="showPage('relatorio')"><span class="icon">📋</span>Relatório</button>
+        <div class="nav-divider"></div>
+        <div class="sidebar-section-label">Configurações</div>
+        <button class="nav-item"        id="nav-usuarios"    onclick="showPage('usuarios')"><span class="icon">👥</span>Usuários</button>
+      </nav>
+      <div style="padding:0 14px 10px">
+        <div class="user-card" style="display:flex;gap:11px;align-items:flex-start">
+          <div class="user-card-avatar" id="user-avatar">A</div>
+          <div class="user-card-info">
+            <div class="user-card-name"  id="user-display-name">—</div>
+            <div class="user-card-email" id="user-display-email">—</div>
+            <span class="user-badge" id="user-badge">usuário</span>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-bottom">
+        <button class="nav-item" onclick="openChangePass()"><span class="icon">🔑</span>Alterar Senha</button>
+        <button class="nav-item" onclick="doLogout()"><span class="icon">🚪</span>Sair</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="topbar-title" id="page-title">Dashboard</div>
+            <div class="topbar-sub"   id="page-sub">Visão geral dos registros</div>
+          </div>
+        </div>
+        <div class="topbar-actions" id="topbar-actions">
+          <button class="theme-btn" id="app-theme-btn" onclick="toggleTheme()">🌙</button>
+        </div>
+      </div>
+      <div class="content" id="content">
+        <div class="loading"><span class="spin">⟳</span> Carregando…</div>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<!-- MODAL LANÇAMENTO -->
+<div class="modal-overlay" id="modal-lancamento">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Novo Lançamento</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field"><label>Nome do Colaborador *</label><input type="text" id="f-nome" placeholder="Nome completo"/></div>
+        <div class="form-field"><label>Função / Cargo *</label><input type="text" id="f-funcao" placeholder="Ex: Analista"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>Data Início *</label><input type="date" id="f-inicio"/></div>
+        <div class="form-field"><label>Data Fim *</label><input type="date" id="f-fim"/></div>
+      </div>
+
+      <!-- TIPO: INTEGRAL / PARCIAL -->
+      <div class="form-field">
+        <label>Tipo de Ausência *</label>
+        <div class="tipo-toggle">
+          <button type="button" class="tipo-btn active-integral" id="tipo-integral" onclick="setTipo('integral')">
+            🟢 Integral
+          </button>
+          <button type="button" class="tipo-btn" id="tipo-parcial" onclick="setTipo('parcial')">
+            🟡 Parcial
+          </button>
+        </div>
+        <input type="hidden" id="f-tipo" value="integral"/>
+      </div>
+
+      <!-- PARTIAL TIME PANEL (shown only when parcial) -->
+      <div class="partial-time-panel" id="partial-time-panel">
+        <div class="partial-time-header">⏱️ Horário da Ausência Parcial</div>
+        <div class="time-fields">
+          <div class="time-field">
+            <label>Hora Início *</label>
+            <input type="time" id="f-hora-inicio" oninput="calcDuration()"/>
+          </div>
+          <div class="time-field">
+            <label>Hora Fim *</label>
+            <input type="time" id="f-hora-fim" oninput="calcDuration()"/>
+          </div>
+        </div>
+        <div class="time-duration-tag" id="duration-tag">—</div>
+      </div>
+
+      <div class="form-field">
+        <label>Motivo *</label>
+        <select id="f-motivo" onchange="checkCustomMotivo()">
+          <option value="">Selecione o motivo…</option>
+          <option>Banco de Horas</option>
+          <option>Folga</option>
+          <option>Atestado</option>
+          <option>Declaração</option>
+          <option value="__outro__">+ Outro (inserir motivo)</option>
+        </select>
+      </div>
+      <div class="form-field" id="f-motivo-custom-wrap" style="display:none">
+        <label>Informe o Motivo</label>
+        <input type="text" id="f-motivo-custom" placeholder="Descreva o motivo personalizado…"/>
+      </div>
+      <div class="form-field">
+        <label>Observação</label>
+        <textarea id="f-obs" placeholder="Informações adicionais (opcional)…"></textarea>
+      </div>
+      <div id="modal-msg" class="auth-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" style="padding:12px 36px;margin-top:0" onclick="saveLancamento()">Salvar Lançamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD -->
+<div id="change-pass-panel">
+  <div class="panel-overlay">
+    <div class="panel">
+      <h3>🔑 Alterar Senha</h3>
+      <div class="auth-form">
+        <div class="ff"><label>Nova Senha</label><input type="password" id="new-pass" placeholder="Mínimo 6 caracteres"/></div>
+        <div class="ff"><label>Confirmar Senha</label><input type="password" id="new-pass2" placeholder="Repita a senha"/></div>
+        <div id="cp-msg" class="auth-msg"></div>
+        <div style="display:flex;gap:12px">
+          <button class="btn-secondary" style="flex:1" onclick="closeChangePass()">Cancelar</button>
+          <button class="btn-primary"   style="flex:1;margin-top:0" onclick="doChangePass()">Alterar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ══ FIREBASE CONFIG ══ substitua pelos seus dados ══
+const firebaseConfig = {
+  apiKey:"AIzaSyCET8KdRxmvWOdzU0lJ_m4KDu0xIl7GE5",
+  authDomain:"controle-de-horas-4e75c.firebaseapp.com",
+  projectId:"controle-de-horas-4e75c",
+  storageBucket:"controle-de-horas-4e75c.firebasestorage.app",
+  messagingSenderId:"39317885480",
+  appId:"1:39317885480:web:23552a4d4ee53d31611b1d"
+};
+const IS_DEMO = firebaseConfig.apiKey === "SUA_API_KEY";
+let app, auth, db;
+let currentUser=null, editingId=null, allRecords=[], chartInstance=null;
+
+// ── THEME ──────────────────────────────────────
+let currentTheme = localStorage.getItem('sysfolgas-theme')||'dark';
+applyTheme(currentTheme, false);
+
+function applyTheme(t, redraw=true){
+  currentTheme=t;
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('sysfolgas-theme',t);
+  const ico = t==='dark'?'☀️':'🌙';
+  ['app-theme-btn','auth-theme-btn'].forEach(id=>{const b=document.getElementById(id);if(b)b.textContent=ico;});
+  if(redraw && chartInstance) rebuildChartFromPage();
+}
+function toggleTheme(){ applyTheme(currentTheme==='dark'?'light':'dark'); }
+function rebuildChartFromPage(){
+  if(!document.getElementById('rel-body')) return;
+  buildChart(getFilteredRecords());
+}
+function destroyChart(){ if(chartInstance){chartInstance.destroy();chartInstance=null;} }
+
+// ── DEMO DATA ─────────────────────────────────
+let demoUsers = [{uid:'admin',email:'admin@sysfolgas.com',name:'Administrador',role:'admin'}];
+let demoRecords = [
+  {id:'r1', nome:'Ana Lima',       funcao:'Analista RH',      inicio:'2024-03-01',fim:'2024-03-03',motivo:'Folga',         tipo:'integral', obs:'',                  criadoEm:new Date('2024-03-01')},
+  {id:'r2', nome:'Carlos Souza',   funcao:'Desenvolvedor',    inicio:'2024-03-04',fim:'2024-03-06',motivo:'Banco de Horas',tipo:'integral', obs:'Sprint Q1',          criadoEm:new Date('2024-03-04')},
+  {id:'r3', nome:'Maria Fernanda', funcao:'Designer UX',      inicio:'2024-03-06',fim:'2024-03-06',motivo:'Atestado',      tipo:'parcial',  horaInicio:'08:00',horaFim:'12:00', obs:'Consulta médica', criadoEm:new Date('2024-03-06')},
+  {id:'r4', nome:'Rafael Costa',   funcao:'Gerente de TI',    inicio:'2024-03-07',fim:'2024-03-09',motivo:'Declaração',    tipo:'integral', obs:'',                  criadoEm:new Date('2024-03-07')},
+  {id:'r5', nome:'Ana Lima',       funcao:'Analista RH',      inicio:'2024-03-12',fim:'2024-03-14',motivo:'Banco de Horas',tipo:'integral', obs:'',                  criadoEm:new Date('2024-03-12')},
+  {id:'r6', nome:'Carlos Souza',   funcao:'Desenvolvedor',    inicio:'2024-03-18',fim:'2024-03-18',motivo:'Folga',         tipo:'parcial',  horaInicio:'13:00',horaFim:'18:00', obs:'Compromisso pessoal', criadoEm:new Date('2024-03-18')},
+  {id:'r7', nome:'Patrícia Melo',  funcao:'Financeiro',       inicio:'2024-03-20',fim:'2024-03-22',motivo:'Atestado',      tipo:'integral', obs:'Cirurgia',           criadoEm:new Date('2024-03-20')},
+  {id:'r8', nome:'Rafael Costa',   funcao:'Gerente de TI',    inicio:'2024-03-25',fim:'2024-03-25',motivo:'Banco de Horas',tipo:'parcial',  horaInicio:'09:00',horaFim:'12:00', obs:'',                  criadoEm:new Date('2024-03-25')},
+  {id:'r9', nome:'Thiago Alves',   funcao:'Suporte Técnico',  inicio:'2024-03-10',fim:'2024-03-12',motivo:'Folga',         tipo:'integral', obs:'Folga programada',   criadoEm:new Date('2024-03-10')},
+  {id:'r10',nome:'Juliana Nunes',  funcao:'Coordenadora RH',  inicio:'2024-03-14',fim:'2024-03-14',motivo:'Declaração',    tipo:'parcial',  horaInicio:'14:00',horaFim:'17:30', obs:'',                  criadoEm:new Date('2024-03-14')},
+];
+
+// ── INIT ──────────────────────────────────────
+function init(){
+  if(IS_DEMO){
+    document.getElementById('fb-banner').style.display='block';
+    document.body.style.paddingTop='40px';
+    showAuthScreen(); return;
+  }
+  app=firebase.initializeApp(firebaseConfig);
+  auth=firebase.auth(); db=firebase.firestore();
+  auth.onAuthStateChanged(u=>u?loginSuccess(u):showAuthScreen());
+}
+
+// ── AUTH ──────────────────────────────────────
+function showAuthScreen(){
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  applyTheme(currentTheme,false);
+}
+function setUserUI(name,email,role){
+  document.getElementById('user-display-name').textContent=name;
+  document.getElementById('user-display-email').textContent=email;
+  document.getElementById('user-badge').textContent=role==='admin'?'👑 admin':'usuário';
+  document.getElementById('user-avatar').textContent=name[0]?.toUpperCase()||'U';
+}
+async function loginSuccess(user){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  applyTheme(currentTheme,false);
+  let role='user',name=user.displayName||user.email;
+  if(db){try{const d=await db.collection('usuarios').doc(user.uid).get();if(d.exists){role=d.data().role||'user';name=d.data().name||name;}}catch(e){}}
+  currentUser={uid:user.uid,email:user.email,displayName:name,role};
+  setUserUI(name,user.email,role);
+  showPage('dashboard');
+}
+function loginSuccessDemo(u){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  applyTheme(currentTheme,false);
+  currentUser={uid:u.uid,email:u.email,displayName:u.name,role:u.role};
+  setUserUI(u.name,u.email,u.role);
+  allRecords=[...demoRecords];
+  showPage('dashboard');
+}
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const msg=document.getElementById('login-msg');
+  msg.className='auth-msg';
+  if(!email||!pass){msg.className='auth-msg error';msg.textContent='Preencha e-mail e senha.';return;}
+  if(IS_DEMO){
+    if(email==='admin@sysfolgas.com'&&pass==='Admin@2024'){loginSuccessDemo(demoUsers[0]);return;}
+    const u=demoUsers.find(x=>x.email===email);
+    if(u)loginSuccessDemo(u); else{msg.className='auth-msg error';msg.textContent='Credenciais inválidas.';}
+    return;
+  }
+  try{await auth.signInWithEmailAndPassword(email,pass);}
+  catch(e){msg.className='auth-msg error';msg.textContent=e.code==='auth/wrong-password'||e.code==='auth/user-not-found'?'E-mail ou senha inválidos.':'Erro ao fazer login.';}
+}
+async function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const msg=document.getElementById('reg-msg');
+  msg.className='auth-msg';
+  if(!name||!email||!pass){msg.className='auth-msg error';msg.textContent='Preencha todos os campos.';return;}
+  if(pass.length<6){msg.className='auth-msg error';msg.textContent='Senha mínimo 6 caracteres.';return;}
+  if(IS_DEMO){
+    if(demoUsers.find(u=>u.email===email)){msg.className='auth-msg error';msg.textContent='E-mail já cadastrado.';return;}
+    demoUsers.push({uid:'u'+Date.now(),email,name,role:'user'});
+    msg.className='auth-msg success';msg.textContent='Conta criada! Faça o login.';
+    setTimeout(()=>switchAuthTab('login'),1500);return;
+  }
+  try{
+    const c=await auth.createUserWithEmailAndPassword(email,pass);
+    await c.user.updateProfile({displayName:name});
+    await db.collection('usuarios').doc(c.user.uid).set({name,email,role:'user',criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+    msg.className='auth-msg success';msg.textContent='Conta criada com sucesso!';
+  }catch(e){msg.className='auth-msg error';msg.textContent=e.code==='auth/email-already-in-use'?'E-mail já cadastrado.':'Erro ao criar conta.';}
+}
+async function doLogout(){if(IS_DEMO){currentUser=null;showAuthScreen();return;} await auth.signOut();}
+function switchAuthTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('form-login').style.display=tab==='login'?'flex':'none';
+  document.getElementById('form-register').style.display=tab==='register'?'flex':'none';
+}
+
+// ── CHANGE PASSWORD ───────────────────────────
+function openChangePass(){document.getElementById('change-pass-panel').classList.add('visible');}
+function closeChangePass(){document.getElementById('change-pass-panel').classList.remove('visible');}
+async function doChangePass(){
+  const p1=document.getElementById('new-pass').value,p2=document.getElementById('new-pass2').value;
+  const msg=document.getElementById('cp-msg');
+  if(p1.length<6){msg.className='auth-msg error';msg.textContent='Mínimo 6 caracteres.';return;}
+  if(p1!==p2){msg.className='auth-msg error';msg.textContent='Senhas não coincidem.';return;}
+  if(IS_DEMO){msg.className='auth-msg success';msg.textContent='Senha alterada (demo).';setTimeout(closeChangePass,1500);return;}
+  try{await auth.currentUser.updatePassword(p1);msg.className='auth-msg success';msg.textContent='Senha alterada!';setTimeout(closeChangePass,1500);}
+  catch(e){msg.className='auth-msg error';msg.textContent='Erro. Refaça o login e tente novamente.';}
+}
+
+// ── PAGES ─────────────────────────────────────
+const PAGE_META={
+  dashboard: {title:'Dashboard',sub:'Visão geral dos registros'},
+  lancamentos:{title:'Lançamentos',sub:'Gerencie todas as ausências'},
+  relatorio:  {title:'Relatório',sub:'Análise e exportação dos dados'},
+  usuarios:   {title:'Usuários',sub:'Contas cadastradas no sistema'},
+};
+function showPage(page){
+  destroyChart();
+  // Reset content styles changed by relatorio
+  if(page!=='relatorio'){
+    const c=document.getElementById('content');
+    if(c){c.style.padding='36px 40px';c.style.display='block';c.style.overflow='auto';}
+  }
+  Object.keys(PAGE_META).forEach(p=>{const e=document.getElementById('nav-'+p);if(e)e.classList.toggle('active',p===page);});
+  const meta=PAGE_META[page]||{title:page,sub:''};
+  document.getElementById('page-title').textContent=meta.title;
+  document.getElementById('page-sub').textContent=meta.sub;
+  const themeIco=currentTheme==='dark'?'☀️':'🌙';
+  const themeBtn=`<button class="theme-btn" id="app-theme-btn" onclick="toggleTheme()" title="Alternar tema">${themeIco}</button>`;
+  const ta=document.getElementById('topbar-actions');
+  if(page==='lancamentos'){
+    ta.innerHTML=`<button class="btn-primary" style="padding:10px 24px;font-size:14px;margin-top:0" onclick="openModal()">+ Novo Lançamento</button>${themeBtn}`;
+    renderLancamentos();
+  } else if(page==='dashboard'){ ta.innerHTML=themeBtn; renderDashboard(); }
+  else if(page==='relatorio'){   ta.innerHTML=themeBtn; renderRelatorio(); }
+  else if(page==='usuarios'){    ta.innerHTML=themeBtn; renderUsuarios(); }
+}
+
+// ── RECORDS ───────────────────────────────────
+async function loadRecords(){
+  if(IS_DEMO){allRecords=[...demoRecords];return;}
+  try{const s=await db.collection('lancamentos').orderBy('criadoEm','desc').get();allRecords=s.docs.map(d=>({id:d.id,...d.data()}));}
+  catch(e){allRecords=[];}
+}
+function daysBetween(a,b){
+  return Math.max(1,Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/(864e5))+1);
+}
+function fmtDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
+function motivoBadge(m){
+  const mp={'Banco de Horas':'badge-blue','Folga':'badge-teal','Atestado':'badge-red','Declaração':'badge-yellow'};
+  return`<span class="badge ${mp[m]||'badge-purple'}">${m}</span>`;
+}
+
+// ── DASHBOARD FILTER STATE ────────────────────
+let dashFilter={de:'',ate:'',colab:''};
+
+// ── DASHBOARD ─────────────────────────────────
+async function renderDashboard(){
+  document.getElementById('content').innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
+  await loadRecords();
+  // populate collaborator names for select
+  const names=[...new Set(allRecords.map(r=>r.nome))].sort();
+  document.getElementById('content').innerHTML=`
+    <!-- FILTER BAR -->
+    <div class="dash-filter-bar">
+      <div class="filter-group">
+        <span class="filter-label">De</span>
+        <input type="date" id="df-de" value="${dashFilter.de}" oninput="applyDashFilters()"/>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Até</span>
+        <input type="date" id="df-ate" value="${dashFilter.ate}" oninput="applyDashFilters()"/>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Colaborador</span>
+        <select id="df-colab" onchange="applyDashFilters()">
+          <option value="">Todos os colaboradores</option>
+          ${names.map(n=>`<option value="${n}" ${dashFilter.colab===n?'selected':''}>${n}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn-clear-dash" id="dash-clear-btn" onclick="clearDashFilters()" style="display:${dashFilter.de||dashFilter.ate||dashFilter.colab?'flex':'none'}">
+        ✕ Limpar filtros
+      </button>
+    </div>
+    <!-- CONTEXT BANNER (shown when colab selected) -->
+    <div id="dash-context-banner" style="display:none"></div>
+    <!-- STATS -->
+    <div class="stats-row" id="dash-stats-row"></div>
+    <!-- BOTTOM -->
+    <div class="dash-bottom">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="dash-table-title">Lançamentos Recentes</div>
+          <button class="btn-secondary" style="font-size:13px;padding:8px 16px" onclick="showPage('lancamentos')">Ver todos →</button>
+        </div>
+        <div class="table-wrap" id="dash-table-wrap"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title card-title-sm">Distribuição por Motivo</div></div>
+        <div class="card-body" style="padding:20px 22px" id="dash-dist"></div>
+      </div>
+    </div>`;
+  applyDashFilters();
+}
+
+function getDashFiltered(){
+  const de=document.getElementById('df-de')?.value||'';
+  const ate=document.getElementById('df-ate')?.value||'';
+  const colab=document.getElementById('df-colab')?.value||'';
+  dashFilter={de,ate,colab};
+  let f=[...allRecords];
+  if(de)    f=f.filter(r=>r.inicio>=de);
+  if(ate)   f=f.filter(r=>r.fim<=ate);
+  if(colab) f=f.filter(r=>r.nome===colab);
+  return f;
+}
+
+function applyDashFilters(){
+  const f=getDashFiltered();
+  const {de,ate,colab}=dashFilter;
+  const hasFilter=de||ate||colab;
+
+  // show/hide clear btn
+  const clearBtn=document.getElementById('dash-clear-btn');
+  if(clearBtn) clearBtn.style.display=hasFilter?'flex':'none';
+
+  // context banner
+  const banner=document.getElementById('dash-context-banner');
+  if(banner){
+    if(colab){
+      const totalDias=f.reduce((s,r)=>s+daysBetween(r.inicio,r.fim),0);
+      const periodoStr=de&&ate?`${fmtDate(de)} → ${fmtDate(ate)}`:de?`A partir de ${fmtDate(de)}`:ate?`Até ${fmtDate(ate)}`:'Todos os períodos';
+      banner.style.display='flex';
+      banner.innerHTML=`
+        <div class="dash-context-avatar">${colab[0].toUpperCase()}</div>
+        <div class="dash-context-info">
+          <h3>${colab}</h3>
+          <p>${f.length} registro${f.length!==1?'s':''} · ${periodoStr}</p>
+        </div>
+        <div class="dash-context-chips">
+          <span class="dash-chip">${f.length} lançamento${f.length!==1?'s':''}</span>
+          <span class="dash-chip chip-green">${totalDias} dia${totalDias!==1?'s':''}</span>
+          ${de||ate?`<span class="dash-chip chip-yellow">📅 Filtro de período ativo</span>`:''}
+        </div>`;
+    } else {
+      banner.style.display='none';
+    }
+  }
+
+  // stats
+  const bm={};f.forEach(r=>{bm[r.motivo]=(bm[r.motivo]||0)+1;});
+  const totalDias=f.reduce((s,r)=>s+daysBetween(r.inicio,r.fim),0);
+  const mes=new Date().getMonth(),ano=new Date().getFullYear();
+  const doMes=f.filter(r=>{const d=new Date(r.inicio+'T00:00:00');return d.getMonth()===mes&&d.getFullYear()===ano;}).length;
+  const uniqColab=new Set(f.map(r=>r.nome)).size;
+  const sr=document.getElementById('dash-stats-row');
+  if(sr) sr.innerHTML=`
+    <div class="stat-card"><span class="stat-icon">📁</span><div class="stat-label">${hasFilter?'Registros Filtrados':'Total de Registros'}</div><div class="stat-value">${f.length}</div><div class="stat-sub">${hasFilter?'no filtro atual':'todos os períodos'}</div></div>
+    <div class="stat-card"><span class="stat-icon">📅</span><div class="stat-label">No Mês Atual</div><div class="stat-value">${doMes}</div><div class="stat-sub">${new Date().toLocaleString('pt-BR',{month:'long',year:'numeric'})}</div></div>
+    <div class="stat-card"><span class="stat-icon">⏱️</span><div class="stat-label">Banco de Horas</div><div class="stat-value">${bm['Banco de Horas']||0}</div><div class="stat-sub">lançamentos</div></div>
+    <div class="stat-card"><span class="stat-icon">🩺</span><div class="stat-label">Atestados</div><div class="stat-value">${bm['Atestado']||0}</div><div class="stat-sub">lançamentos</div></div>
+    <div class="stat-card"><span class="stat-icon">☀️</span><div class="stat-label">Folgas</div><div class="stat-value">${bm['Folga']||0}</div><div class="stat-sub">lançamentos</div></div>
+    <div class="stat-card"><span class="stat-icon">📆</span><div class="stat-label">Total de Dias</div><div class="stat-value">${totalDias}</div><div class="stat-sub">${colab?colab:uniqColab+' colaborador'+(uniqColab!==1?'es':'')}</div></div>`;
+
+  // table
+  const tw=document.getElementById('dash-table-wrap');
+  const tt=document.getElementById('dash-table-title');
+  if(tt) tt.textContent=hasFilter?`Lançamentos Filtrados (${f.length})`:`Lançamentos Recentes`;
+  if(tw) tw.innerHTML=tableHTML(hasFilter?f:f.slice(0,8));
+
+  // distribution
+  const dist=document.getElementById('dash-dist');
+  if(dist){
+    const tot=f.length||1;
+    dist.innerHTML=['Banco de Horas','Folga','Atestado','Declaração'].map((m,i)=>{
+      const cnt=bm[m]||0;
+      const pct=Math.round(cnt/tot*100);
+      const colors=['var(--accent)','var(--accent2)','var(--danger)','var(--accent3)'];
+      return`<div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:13.5px;font-weight:500;color:var(--text)">${m}</span>
+          <span style="font-size:13px;color:var(--text2)">${cnt} <span style="color:var(--text3);font-size:11.5px">(${pct}%)</span></span>
+        </div>
+        <div style="height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border)">
+          <div style="height:100%;width:${pct}%;background:${colors[i]};border-radius:4px;transition:width .6s ease"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function clearDashFilters(){
+  dashFilter={de:'',ate:'',colab:''};
+  const de=document.getElementById('df-de');
+  const ate=document.getElementById('df-ate');
+  const colab=document.getElementById('df-colab');
+  if(de) de.value='';
+  if(ate) ate.value='';
+  if(colab) colab.value='';
+  applyDashFilters();
+}
+
+// ── LANÇAMENTOS ───────────────────────────────
+async function renderLancamentos(){
+  document.getElementById('content').innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
+  await loadRecords();
+  document.getElementById('content').innerHTML=`
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Todos os Lançamentos <span style="font-size:14px;font-weight:500;color:var(--text2)">(${allRecords.length})</span></div>
+      </div>
+      <div class="table-wrap">${tableHTML(allRecords,true)}</div>
+    </div>`;
+}
+
+function tipoBadge(r){
+  if(!r.tipo||r.tipo==='integral') return`<span class="tipo-tag tipo-integral">🟢 Integral</span>`;
+  const dur=r.horaInicio&&r.horaFim?` ${r.horaInicio}–${r.horaFim}`:'';
+  return`<span class="tipo-tag tipo-parcial">🟡 Parcial${dur}</span>`;
+}
+
+function tableHTML(records, withActions=false){
+  if(!records.length)return`<div class="empty"><div class="empty-icon">📭</div><p>Nenhum registro encontrado</p></div>`;
+  const rows=records.map(r=>`<tr>
+    <td class="td-name">${r.nome}</td>
+    <td class="td-muted">${r.funcao}</td>
+    <td>${fmtDate(r.inicio)}</td>
+    <td>${fmtDate(r.fim)}</td>
+    <td style="text-align:center;font-weight:700;font-family:'Syne',sans-serif;font-size:15px">${daysBetween(r.inicio,r.fim)}</td>
+    <td>${tipoBadge(r)}</td>
+    <td>${motivoBadge(r.motivo)}</td>
+    <td class="td-muted">${r.obs||'—'}</td>
+    ${withActions?`<td><div class="row-actions">
+      <button class="btn-xs btn-edit" onclick="editLancamento('${r.id}')">✏️ Editar</button>
+      <button class="btn-xs btn-del"  onclick="deleteLancamento('${r.id}')">🗑️</button>
+    </div></td>`:''}
+  </tr>`).join('');
+  return`<table><thead><tr>
+    <th>Colaborador</th><th>Função</th><th>Início</th><th>Fim</th>
+    <th style="text-align:center">Dias</th><th>Tipo</th><th>Motivo</th><th>Observação</th>
+    ${withActions?'<th>Ações</th>':''}
+  </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ── MODAL ─────────────────────────────────────
+function openModal(id=null){
+  editingId=id;
+  document.getElementById('modal-title').textContent=id?'Editar Lançamento':'Novo Lançamento';
+  document.getElementById('modal-msg').className='auth-msg';
+  if(id){
+    const r=allRecords.find(x=>x.id===id);
+    if(r){
+      document.getElementById('f-nome').value=r.nome;
+      document.getElementById('f-funcao').value=r.funcao;
+      document.getElementById('f-inicio').value=r.inicio;
+      document.getElementById('f-fim').value=r.fim;
+      const std=['Banco de Horas','Folga','Atestado','Declaração'];
+      if(std.includes(r.motivo)){document.getElementById('f-motivo').value=r.motivo;document.getElementById('f-motivo-custom-wrap').style.display='none';}
+      else{document.getElementById('f-motivo').value='__outro__';document.getElementById('f-motivo-custom-wrap').style.display='block';document.getElementById('f-motivo-custom').value=r.motivo;}
+      document.getElementById('f-obs').value=r.obs||'';
+      // restore tipo
+      const tipo=r.tipo||'integral';
+      setTipo(tipo);
+      if(tipo==='parcial'){
+        document.getElementById('f-hora-inicio').value=r.horaInicio||'';
+        document.getElementById('f-hora-fim').value=r.horaFim||'';
+        calcDuration();
+      }
+    }
+  } else {
+    ['f-nome','f-funcao','f-inicio','f-fim','f-obs','f-motivo-custom'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('f-motivo').value='';
+    document.getElementById('f-motivo-custom-wrap').style.display='none';
+    setTipo('integral');
+  }
+  document.getElementById('modal-lancamento').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-lancamento').classList.remove('open');}
+function checkCustomMotivo(){document.getElementById('f-motivo-custom-wrap').style.display=document.getElementById('f-motivo').value==='__outro__'?'block':'none';}
+
+// ── TIPO: INTEGRAL / PARCIAL ─────────────────
+function setTipo(tipo){
+  document.getElementById('f-tipo').value=tipo;
+  const btnI=document.getElementById('tipo-integral');
+  const btnP=document.getElementById('tipo-parcial');
+  const panel=document.getElementById('partial-time-panel');
+  if(tipo==='integral'){
+    btnI.className='tipo-btn active-integral';
+    btnP.className='tipo-btn';
+    panel.classList.remove('visible');
+    document.getElementById('f-hora-inicio').value='';
+    document.getElementById('f-hora-fim').value='';
+    document.getElementById('duration-tag').classList.remove('visible');
+  } else {
+    btnI.className='tipo-btn';
+    btnP.className='tipo-btn active-parcial';
+    panel.classList.add('visible');
+    setTimeout(()=>document.getElementById('f-hora-inicio').focus(),80);
+  }
+}
+
+function calcDuration(){
+  const hi=document.getElementById('f-hora-inicio').value;
+  const hf=document.getElementById('f-hora-fim').value;
+  const tag=document.getElementById('duration-tag');
+  if(!hi||!hf){tag.classList.remove('visible');return;}
+  const [hh,mm]=hi.split(':').map(Number);
+  const [eh,em]=hf.split(':').map(Number);
+  const totalMin=(eh*60+em)-(hh*60+mm);
+  if(totalMin<=0){
+    tag.classList.add('visible');
+    tag.style.background='rgba(245,97,94,.09)';
+    tag.style.borderColor='rgba(245,97,94,.22)';
+    tag.style.color='var(--danger)';
+    tag.textContent='⚠️ Hora fim deve ser maior que hora início';
+    return;
+  }
+  const h=Math.floor(totalMin/60), m=totalMin%60;
+  tag.classList.add('visible');
+  tag.style.background='rgba(79,142,247,.09)';
+  tag.style.borderColor='rgba(79,142,247,.2)';
+  tag.style.color='var(--accent)';
+  tag.textContent=`⏱️ Duração: ${h>0?h+'h ':''}${m>0?m+'min':''}`;
+}
+
+async function saveLancamento(){
+  const nome=document.getElementById('f-nome').value.trim();
+  const funcao=document.getElementById('f-funcao').value.trim();
+  const inicio=document.getElementById('f-inicio').value;
+  const fim=document.getElementById('f-fim').value;
+  const motivoSel=document.getElementById('f-motivo').value;
+  const motivoCustom=document.getElementById('f-motivo-custom').value.trim();
+  const obs=document.getElementById('f-obs').value.trim();
+  const tipo=document.getElementById('f-tipo').value;
+  const horaInicio=tipo==='parcial'?document.getElementById('f-hora-inicio').value:'';
+  const horaFim=tipo==='parcial'?document.getElementById('f-hora-fim').value:'';
+  const msg=document.getElementById('modal-msg');
+  if(!nome||!funcao||!inicio||!fim||!motivoSel){msg.className='auth-msg error';msg.textContent='Preencha todos os campos obrigatórios.';return;}
+  if(motivoSel==='__outro__'&&!motivoCustom){msg.className='auth-msg error';msg.textContent='Informe o motivo personalizado.';return;}
+  if(inicio>fim){msg.className='auth-msg error';msg.textContent='Data início não pode ser maior que a data fim.';return;}
+  if(tipo==='parcial'){
+    if(!horaInicio||!horaFim){msg.className='auth-msg error';msg.textContent='Informe o horário de início e fim da ausência parcial.';return;}
+    const [hh,mm]=horaInicio.split(':').map(Number);
+    const [eh,em]=horaFim.split(':').map(Number);
+    if((eh*60+em)<=(hh*60+mm)){msg.className='auth-msg error';msg.textContent='Hora fim deve ser maior que hora início.';return;}
+  }
+  const motivo=motivoSel==='__outro__'?motivoCustom:motivoSel;
+  const data={nome,funcao,inicio,fim,motivo,tipo,obs,criadoEm:new Date()};
+  if(tipo==='parcial'){data.horaInicio=horaInicio;data.horaFim=horaFim;}
+  if(IS_DEMO){
+    if(editingId){const idx=demoRecords.findIndex(r=>r.id===editingId);if(idx>=0)demoRecords[idx]={...demoRecords[idx],...data};}
+    else demoRecords.unshift({id:'r'+Date.now(),...data});
+    closeModal();toast('✅ Lançamento salvo!','success');renderLancamentos();return;
+  }
+  try{
+    data.criadoEm=firebase.firestore.FieldValue.serverTimestamp();data.userId=currentUser.uid;
+    if(editingId)await db.collection('lancamentos').doc(editingId).update(data);
+    else await db.collection('lancamentos').add(data);
+    closeModal();toast('✅ Lançamento salvo!','success');renderLancamentos();
+  }catch(e){msg.className='auth-msg error';msg.textContent='Erro ao salvar. Tente novamente.';}
+}
+function editLancamento(id){openModal(id);}
+async function deleteLancamento(id){
+  if(!confirm('Deseja excluir este lançamento?'))return;
+  if(IS_DEMO){const i=demoRecords.findIndex(r=>r.id===id);if(i>=0)demoRecords.splice(i,1);toast('🗑️ Excluído.','success');renderLancamentos();return;}
+  try{await db.collection('lancamentos').doc(id).delete();toast('🗑️ Excluído.','success');renderLancamentos();}
+  catch(e){toast('Erro ao excluir.','error');}
+}
+
+// ════════════════════════════════════════════
+// RELATÓRIO — 2 colunas: gráfico | tabela
+// ════════════════════════════════════════════
+async function renderRelatorio(){
+  // Make content fill the remaining height (no extra scroll)
+  const content = document.getElementById('content');
+  content.style.padding='0';
+  content.style.display='flex';
+  content.style.flexDirection='column';
+  content.style.overflow='hidden';
+
+  await loadRecords();
+
+  content.innerHTML=`
+    <!-- FILTERS -->
+    <div class="filters-bar">
+      <div class="filter-group"><span class="filter-label">De</span><input type="date" id="f-de"/></div>
+      <div class="filter-group"><span class="filter-label">Até</span><input type="date" id="f-ate"/></div>
+      <div class="filter-group"><span class="filter-label">Colaborador</span><input type="text" id="f-colab" placeholder="Buscar por nome…"/></div>
+      <div class="filter-group">
+        <span class="filter-label">Motivo</span>
+        <select id="f-mot">
+          <option value="">Todos os motivos</option>
+          <option>Banco de Horas</option><option>Folga</option>
+          <option>Atestado</option><option>Declaração</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Tipo</span>
+        <select id="f-tipo-fil">
+          <option value="">Integral e Parcial</option>
+          <option value="integral">🟢 Integral</option>
+          <option value="parcial">🟡 Parcial</option>
+        </select>
+      </div>
+      <button class="btn-filter" onclick="applyFilters()">🔍 Filtrar</button>
+      <button class="btn-excel"  onclick="exportExcel()">📥 Exportar Excel</button>
+    </div>
+
+    <!-- 2-COL BODY -->
+    <div class="rel-body" id="rel-body">
+
+      <!-- LEFT: CHART PANEL -->
+      <div class="rel-chart-panel" id="chart-panel">
+        <div class="chart-title-block">
+          <div class="card-title" style="font-size:15px">Dias por Colaborador</div>
+          <div class="chart-period" id="chart-period-label">Período: todos os registros</div>
+        </div>
+        <div class="chart-canvas-wrap" id="chart-canvas-wrap" style="min-height:200px;flex:1">
+          <canvas id="horasChart"></canvas>
+          <div class="chart-empty" id="chart-empty" style="display:none">
+            <span class="ico">📊</span>Nenhum dado para exibir.
+          </div>
+        </div>
+        <div class="legend-row" id="legend-container" style="margin-top:16px"></div>
+        <!-- Resumo por motivo -->
+        <div class="motivo-summary" id="motivo-summary"></div>
+      </div>
+
+      <!-- RIGHT: TABLE PANEL -->
+      <div class="rel-table-panel">
+        <div class="panel-thead">
+          <span class="panel-thead-title">Registros Filtrados</span>
+          <span class="panel-count" id="table-count">${allRecords.length} registros</span>
+        </div>
+        <div id="rel-table" class="table-wrap" style="flex:1;overflow:auto">${tableHTML(allRecords)}</div>
+      </div>
+
+    </div>`;
+
+  buildChart(allRecords);
+  renderMotivoSummary(allRecords);
+}
+
+function getFilteredRecords(){
+  const de=document.getElementById('f-de')?.value;
+  const ate=document.getElementById('f-ate')?.value;
+  const colab=document.getElementById('f-colab')?.value.trim().toLowerCase();
+  const mot=document.getElementById('f-mot')?.value;
+  const tipoFil=document.getElementById('f-tipo-fil')?.value;
+  let f=allRecords;
+  if(de)      f=f.filter(r=>r.inicio>=de);
+  if(ate)     f=f.filter(r=>r.fim<=ate);
+  if(colab)   f=f.filter(r=>r.nome.toLowerCase().includes(colab));
+  if(mot)     f=f.filter(r=>r.motivo===mot);
+  if(tipoFil) f=f.filter(r=>(r.tipo||'integral')===tipoFil);
+  return f;
+}
+
+function applyFilters(){
+  const filtered=getFilteredRecords();
+  document.getElementById('rel-table').innerHTML=tableHTML(filtered);
+  const tc=document.getElementById('table-count');
+  if(tc) tc.textContent=`${filtered.length} registro${filtered.length!==1?'s':''}`;
+  // period label
+  const de=document.getElementById('f-de').value, ate=document.getElementById('f-ate').value;
+  const colab=document.getElementById('f-colab').value.trim();
+  let label='Período: todos os registros';
+  if(de&&ate) label=`${fmtDate(de)} → ${fmtDate(ate)}`;
+  else if(de) label=`A partir de ${fmtDate(de)}`;
+  else if(ate) label=`Até ${fmtDate(ate)}`;
+  if(colab) label+=` · ${colab}`;
+  const pl=document.getElementById('chart-period-label');
+  if(pl) pl.textContent=label;
+  buildChart(filtered);
+  renderMotivoSummary(filtered);
+}
+
+// ── CHART ─────────────────────────────────────
+const MOTIVOS_STD=['Banco de Horas','Folga','Atestado','Declaração','Outros'];
+const PAL_DARK =[
+  {bg:'rgba(79,142,247,.82)',  brd:'#4f8ef7'},
+  {bg:'rgba(46,232,196,.78)',  brd:'#2ee8c4'},
+  {bg:'rgba(245,97,94,.80)',   brd:'#f5615e'},
+  {bg:'rgba(245,197,66,.80)',  brd:'#f5c542'},
+  {bg:'rgba(172,120,255,.75)', brd:'#ac78ff'},
+];
+const PAL_LIGHT=[
+  {bg:'rgba(47,111,232,.72)',  brd:'#2f6fe8'},
+  {bg:'rgba(8,158,136,.70)',   brd:'#089e88'},
+  {bg:'rgba(217,53,53,.70)',   brd:'#d93535'},
+  {bg:'rgba(200,144,13,.72)',  brd:'#c8900d'},
+  {bg:'rgba(144,90,200,.70)',  brd:'#905ac8'},
+];
+
+function buildChart(records){
+  const colabMap={};
+  records.forEach(r=>{
+    const dias=daysBetween(r.inicio,r.fim);
+    const mot=MOTIVOS_STD.includes(r.motivo)?r.motivo:'Outros';
+    if(!colabMap[r.nome]) colabMap[r.nome]={};
+    colabMap[r.nome][mot]=(colabMap[r.nome][mot]||0)+dias;
+  });
+  const labels=Object.keys(colabMap);
+  const canvas=document.getElementById('horasChart');
+  const emptyEl=document.getElementById('chart-empty');
+  if(!canvas) return;
+  if(!labels.length){
+    emptyEl.style.display='block';canvas.style.display='none';
+    destroyChart();renderLegend([]);return;
+  }
+  emptyEl.style.display='none';canvas.style.display='block';
+
+  const isDark=currentTheme==='dark';
+  const pal=isDark?PAL_DARK:PAL_LIGHT;
+  const gridColor=isDark?'rgba(255,255,255,.05)':'rgba(0,0,0,.07)';
+  const tickColor=isDark?'#828ba8':'#525d7a';
+
+  // sort biggest total first
+  const sorted=labels.map(n=>({n,t:MOTIVOS_STD.reduce((s,m)=>s+(colabMap[n][m]||0),0)})).sort((a,b)=>b.t-a.t);
+  const sortedLabels=sorted.map(x=>x.n);
+
+  const datasets=MOTIVOS_STD.map((mot,i)=>({
+    label:mot,
+    data:sortedLabels.map(n=>colabMap[n][mot]||0),
+    backgroundColor:pal[i].bg,
+    borderColor:pal[i].brd,
+    borderWidth:1.5,
+    borderRadius:5,
+    borderSkipped:false,
+  }));
+
+  destroyChart();
+  // Auto-height: each bar ~52px
+  const wrapEl=document.getElementById('chart-canvas-wrap');
+  const barH=Math.max(120, sortedLabels.length*54);
+  canvas.style.height=barH+'px';
+  if(wrapEl) wrapEl.style.minHeight=(barH+40)+'px';
+
+  chartInstance=new Chart(canvas.getContext('2d'),{
+    type:'bar',
+    data:{labels:sortedLabels,datasets},
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:{duration:550,easing:'easeOutQuart'},
+      layout:{padding:{right:6}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:isDark?'#191d28':'#fff',
+          titleColor:isDark?'#e9ecf5':'#141928',
+          bodyColor:isDark?'#828ba8':'#525d7a',
+          borderColor:isDark?'#272d44':'#d8ddef',
+          borderWidth:1,padding:12,
+          callbacks:{
+            title:i=>`👤 ${i[0].label}`,
+            label:c=>c.raw>0?`  ${c.dataset.label}: ${c.raw} dia${c.raw!==1?'s':''}`:null,
+            afterBody:i=>{
+              const tot=datasets.reduce((s,d)=>s+d.data[i[0].dataIndex],0);
+              return tot>0?['  ─────────────',`  Total: ${tot} dia${tot!==1?'s':''}`]:[];
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          stacked:true,beginAtZero:true,
+          grid:{color:gridColor},
+          ticks:{color:tickColor,font:{family:'DM Sans',size:12.5},stepSize:1},
+          title:{display:true,text:'Quantidade de dias',color:tickColor,font:{family:'DM Sans',size:12.5}},
+        },
+        y:{
+          stacked:true,grid:{display:false},
+          ticks:{color:tickColor,font:{family:'DM Sans',size:13.5,weight:'600'}},
+        },
+      },
+    },
+  });
+  renderLegend(pal);
+}
+
+function renderLegend(pal){
+  const el=document.getElementById('legend-container');
+  if(!el) return;
+  if(!pal.length){el.innerHTML='';return;}
+  el.innerHTML=MOTIVOS_STD.map((m,i)=>`
+    <div class="legend-item"><span class="legend-dot" style="background:${pal[i].brd}"></span>${m}</div>`).join('');
+}
+
+function renderMotivoSummary(records){
+  const el=document.getElementById('motivo-summary');
+  if(!el) return;
+  const isDark=currentTheme==='dark';
+  const pal=isDark?PAL_DARK:PAL_LIGHT;
+  const bm={};records.forEach(r=>{
+    const m=MOTIVOS_STD.includes(r.motivo)?r.motivo:'Outros';
+    bm[m]=(bm[m]||0)+daysBetween(r.inicio,r.fim);
+  });
+  el.innerHTML=MOTIVOS_STD.filter(m=>bm[m]).map((m,i)=>`
+    <div class="motivo-row">
+      <div class="motivo-row-left"><span class="motivo-dot" style="background:${pal[MOTIVOS_STD.indexOf(m)].brd}"></span><span style="font-size:13px;color:var(--text)">${m}</span></div>
+      <div class="motivo-row-val">${bm[m]} dia${bm[m]!==1?'s':''}</div>
+    </div>`).join('');
+}
+
+// ── EXCEL ──────────────────────────────────────
+function exportExcel(){
+  const data=getFilteredRecords().map(r=>{
+    const tipo=r.tipo||'integral';
+    const horario=tipo==='parcial'&&r.horaInicio&&r.horaFim?`${r.horaInicio} – ${r.horaFim}`:'—';
+    return{
+      'Nome':r.nome,'Função':r.funcao,
+      'Data Início':fmtDate(r.inicio),'Data Fim':fmtDate(r.fim),
+      'Dias':daysBetween(r.inicio,r.fim),
+      'Tipo':tipo==='parcial'?'Parcial':'Integral',
+      'Horário (Parcial)':horario,
+      'Motivo':r.motivo,'Observação':r.obs||''
+    };
+  });
+  if(!data.length){toast('Nenhum registro para exportar.','error');return;}
+  const ws=XLSX.utils.json_to_sheet(data);
+  ws['!cols']=[{wch:26},{wch:22},{wch:13},{wch:13},{wch:6},{wch:11},{wch:18},{wch:18},{wch:38}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Relatório');
+  XLSX.writeFile(wb,`relatorio_folgas_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('📥 Excel exportado!','success');
+}
+
+// ── USUÁRIOS ──────────────────────────────────
+async function renderUsuarios(){
+  // restore content style after relatorio
+  const c=document.getElementById('content');
+  c.style.padding='36px 40px';c.style.display='block';c.style.overflow='auto';
+  if(IS_DEMO){
+    c.innerHTML=`<div class="card"><div class="card-header"><div class="card-title">Usuários Cadastrados</div></div>
+      <div class="table-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th></tr></thead>
+      <tbody>${demoUsers.map(u=>`<tr><td class="td-name">${u.name}</td><td>${u.email}</td>
+        <td>${u.role==='admin'?'<span class="badge badge-blue">👑 Admin</span>':'<span class="badge badge-gray">Usuário</span>'}</td></tr>`).join('')}
+      </tbody></table></div></div>`;
+    return;
+  }
+  c.innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
+  try{
+    const snap=await db.collection('usuarios').get();
+    const users=snap.docs.map(d=>({id:d.id,...d.data()}));
+    c.innerHTML=`<div class="card"><div class="card-header"><div class="card-title">Usuários Cadastrados <span style="font-size:14px;color:var(--text2);font-weight:400">(${users.length})</span></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Ações</th></tr></thead>
+      <tbody>${users.map(u=>`<tr><td class="td-name">${u.name||'—'}</td><td>${u.email}</td>
+        <td>${u.role==='admin'?'<span class="badge badge-blue">👑 Admin</span>':'<span class="badge badge-gray">Usuário</span>'}</td>
+        <td>${currentUser.role==='admin'?`<button class="btn-xs ${u.role==='admin'?'btn-del':'btn-edit'}" onclick="toggleRole('${u.id}','${u.role}')">${u.role==='admin'?'Remover Admin':'Tornar Admin'}</button>`:'—'}</td>
+      </tr>`).join('')}</tbody></table></div></div>`;
+  }catch(e){c.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><p>Erro ao carregar usuários</p></div>`;}
+}
+async function toggleRole(uid,currentRole){
+  const newRole=currentRole==='admin'?'user':'admin';
+  try{await db.collection('usuarios').doc(uid).update({role:newRole});toast(`Perfil → ${newRole}!`,'success');renderUsuarios();}
+  catch(e){toast('Erro ao atualizar.','error');}
+}
+
+// also restore content style when switching away from relatorio
+
+
+// ── TOAST ──────────────────────────────────────
+function toast(msg,type='success'){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  t.className=`toast toast-${type}`;
+  t.innerHTML=msg;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(()=>t.remove(),400);},3200);
+}
+
+// ── INIT ───────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>init());
+</script>
+</body>
+</html>
