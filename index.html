@@ -638,6 +638,71 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
 /* Modal Colaborador */
 #modal-colaborador .modal{max-width:480px}
 
+/* ════════════════════════════════════════════
+   PERMISSÕES
+════════════════════════════════════════════ */
+.perm-modal .modal{max-width:520px}
+.perm-user-header{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 20px;background:var(--surface2);border-radius:10px;
+  margin-bottom:20px;border:1px solid var(--border);
+}
+.perm-avatar{
+  width:42px;height:42px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:700;color:#fff;
+}
+.perm-user-name{font-size:15px;font-weight:700;color:var(--text)}
+.perm-user-email{font-size:12px;color:var(--text3);margin-top:2px}
+.perm-list{display:flex;flex-direction:column;gap:10px}
+.perm-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;border-radius:10px;
+  background:var(--surface2);border:1px solid var(--border);
+}
+.perm-item-left{display:flex;align-items:center;gap:12px}
+.perm-item-icon{font-size:18px;width:26px;text-align:center}
+.perm-item-label{font-size:14px;font-weight:600;color:var(--text)}
+.perm-item-desc{font-size:12px;color:var(--text3);margin-top:2px}
+/* Toggle switch */
+.toggle-wrap{display:flex;align-items:center;gap:8px}
+.toggle-label{font-size:12px;color:var(--text3);min-width:32px;text-align:right}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;inset:0;border-radius:24px;cursor:pointer;
+  background:var(--surface3);border:1px solid var(--border);
+  transition:background .2s;
+}
+.toggle-slider::before{
+  content:'';position:absolute;width:18px;height:18px;
+  left:2px;top:2px;border-radius:50%;background:#fff;
+  transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);
+}
+.toggle input:checked+.toggle-slider{background:var(--accent);border-color:var(--accent)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(20px)}
+/* Blocked page */
+.page-blocked{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:80px 20px;text-align:center;color:var(--text3);
+}
+.page-blocked .blocked-icon{font-size:52px;margin-bottom:16px;opacity:.4}
+.page-blocked h3{font-size:18px;font-weight:700;color:var(--text2);margin-bottom:8px}
+.page-blocked p{font-size:14px;line-height:1.6}
+
+/* Perm badge na tabela de usuários */
+.perm-badge-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.perm-tag{
+  font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px;
+  background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.2);
+  white-space:nowrap;
+}
+.perm-tag.denied{
+  background:rgba(130,139,168,.1);color:var(--text3);border-color:var(--border);
+  text-decoration:line-through;opacity:.6;
+}
+
 /* table header in rel panel */
 .panel-thead{
   padding:12px 18px;background:var(--surface2);border-bottom:1px solid var(--border);
@@ -823,30 +888,31 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
   </div>
 </div>
 
-<!-- MODAL COLABORADOR -->
-<div class="modal-overlay" id="modal-colaborador">
-  <div class="modal" style="width:480px">
+<!-- MODAL PERMISSÕES -->
+<div class="modal-overlay perm-modal" id="modal-permissoes">
+  <div class="modal" style="max-width:520px">
     <div class="modal-header">
-      <div class="modal-title" id="modal-colab-title">Novo Colaborador</div>
-      <button class="modal-close" onclick="closeColabModal()">✕</button>
+      <div class="modal-title">🔐 Permissões do Usuário</div>
+      <button class="modal-close" onclick="closePermModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-field"><label>Nome Completo *</label><input type="text" id="fc-nome" placeholder="Ex: João da Silva"/></div>
-      <div class="form-field"><label>Função / Cargo *</label><input type="text" id="fc-funcao" placeholder="Ex: Analista, Técnico, Gerente…"/></div>
-      <div class="form-field">
-        <label>Setor / Departamento</label>
-        <input type="text" id="fc-setor" placeholder="Ex: TI, Financeiro, RH… (opcional)"/>
+      <div class="perm-user-header">
+        <div class="perm-avatar" id="perm-avatar">U</div>
+        <div>
+          <div class="perm-user-name" id="perm-user-name">—</div>
+          <div class="perm-user-email" id="perm-user-email">—</div>
+        </div>
       </div>
-      <div id="modal-colab-msg" class="auth-msg"></div>
+      <div class="perm-list" id="perm-list"></div>
+      <div id="modal-perm-msg" class="auth-msg" style="margin-top:14px"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeColabModal()">Cancelar</button>
-      <button class="btn-primary" style="padding:12px 36px;margin-top:0" onclick="saveColaborador()">Salvar</button>
+      <button class="btn-secondary" onclick="closePermModal()">Cancelar</button>
+      <button class="btn-primary" style="padding:12px 36px;margin-top:0" onclick="savePermissoes()">Salvar Permissões</button>
     </div>
   </div>
 </div>
 
-<!-- CHANGE PASSWORD -->
 <!-- MODAL COLABORADOR -->
 <div class="modal-overlay" id="modal-colaborador">
   <div class="modal" style="max-width:480px">
@@ -1005,18 +1071,19 @@ function showAuthScreen(){
 function setUserUI(name,email,role){
   document.getElementById('user-display-name').textContent=name;
   document.getElementById('user-display-email').textContent=email;
-  document.getElementById('user-badge').textContent=role==='admin'?'👑 admin':'usuário';
+  document.getElementById('user-badge').textContent=role==='admin'?'👑 admin':'👤 usuário';
   document.getElementById('user-avatar').textContent=name[0]?.toUpperCase()||'U';
 }
 async function loginSuccess(user){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   applyTheme(currentTheme,false);
-  let role='user',name=user.displayName||user.email;
-  if(db){try{const d=await db.collection('usuarios').doc(user.uid).get();if(d.exists){role=d.data().role||'user';name=d.data().name||name;}}catch(e){}}
-  currentUser={uid:user.uid,email:user.email,displayName:name,role};
+  let role='user',name=user.displayName||user.email,permissions=null;
+  if(db){try{const d=await db.collection('usuarios').doc(user.uid).get();if(d.exists){role=d.data().role||'user';name=d.data().name||name;permissions=d.data().permissions||null;}}catch(e){}}
+  currentUser={uid:user.uid,email:user.email,displayName:name,role,permissions};
   setUserUI(name,user.email,role);
   await loadColaboradores();
+  updateSidebarForPerms();
   showPage('dashboard');
 }
 async function loginSuccessDemo(u){
@@ -1107,6 +1174,19 @@ function showPage(page){
   const themeIco=currentTheme==='dark'?'☀️':'🌙';
   const themeBtn=`<button class="theme-btn" id="app-theme-btn" onclick="toggleTheme()" title="Alternar tema">${themeIco}</button>`;
   const ta=document.getElementById('topbar-actions');
+
+  // Permission gate
+  if(!hasPermission(page)){
+    ta.innerHTML=themeBtn;
+    document.getElementById('content').innerHTML=`
+      <div class="page-blocked">
+        <div class="blocked-icon">🔒</div>
+        <h3>Acesso Restrito</h3>
+        <p>Você não tem permissão para acessar <strong>${meta.title}</strong>.<br>Solicite ao administrador que libere o acesso.</p>
+      </div>`;
+    return;
+  }
+
   if(page==='lancamentos'){
     ta.innerHTML=`<button class="btn-primary" style="padding:10px 24px;font-size:14px;margin-top:0" onclick="openModal()">+ Novo Lançamento</button>${themeBtn}`;
     renderLancamentos();
@@ -1911,29 +1991,126 @@ function hideColabSuggestions(){
   if(box) box.style.display='none';
 }
 
+// ── PERMISSIONS SYSTEM ────────────────────────
+// Each permission key maps to a page/feature
+const PERMS_DEF = [
+  {key:'dashboard',    icon:'📊', label:'Dashboard',      desc:'Visão geral e estatísticas'},
+  {key:'lancamentos',  icon:'📝', label:'Lançamentos',    desc:'Criar, editar e excluir registros'},
+  {key:'relatorio',    icon:'📋', label:'Relatório',      desc:'Consultar e exportar relatórios'},
+  {key:'colaboradores',icon:'🧑‍💼', label:'Colaboradores',  desc:'Gerenciar lista de colaboradores'},
+  {key:'usuarios',     icon:'👥', label:'Usuários',       desc:'Gerenciar usuários do sistema'},
+];
+// Defaults for new users (non-admin)
+const DEFAULT_PERMS = {dashboard:true, lancamentos:true, relatorio:false, colaboradores:false, usuarios:false};
+
+function hasPermission(page){
+  if(!currentUser) return false;
+  if(currentUser.role==='admin') return true;
+  const p = currentUser.permissions || DEFAULT_PERMS;
+  return p[page] === true;
+}
+
+function updateSidebarForPerms(){
+  PERMS_DEF.forEach(p=>{
+    const el=document.getElementById('nav-'+p.key);
+    if(!el) return;
+    const ok=hasPermission(p.key);
+    el.style.opacity = ok?'1':'0.38';
+    el.style.pointerEvents = ok?'':'none';
+    el.title = ok?'':('Sem permissão de acesso');
+  });
+}
+
+let editingPermUid=null, editingPermUser=null;
+
+function openPermModal(uid, name, email, perms){
+  editingPermUid=uid; editingPermUser={uid,name,email,perms};
+  document.getElementById('perm-avatar').textContent=(name||'U')[0].toUpperCase();
+  document.getElementById('perm-user-name').textContent=name||'—';
+  document.getElementById('perm-user-email').textContent=email||'—';
+  document.getElementById('modal-perm-msg').className='auth-msg';
+  const p = perms || DEFAULT_PERMS;
+  document.getElementById('perm-list').innerHTML = PERMS_DEF.map(def=>`
+    <div class="perm-item">
+      <div class="perm-item-left">
+        <span class="perm-item-icon">${def.icon}</span>
+        <div>
+          <div class="perm-item-label">${def.label}</div>
+          <div class="perm-item-desc">${def.desc}</div>
+        </div>
+      </div>
+      <div class="toggle-wrap">
+        <span class="toggle-label" id="lbl-${def.key}">${p[def.key]!==false?'Sim':'Não'}</span>
+        <label class="toggle">
+          <input type="checkbox" id="perm-${def.key}" ${p[def.key]!==false?'checked':''}
+            onchange="document.getElementById('lbl-${def.key}').textContent=this.checked?'Sim':'Não'"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>`).join('');
+  document.getElementById('modal-permissoes').classList.add('open');
+}
+function closePermModal(){document.getElementById('modal-permissoes').classList.remove('open');}
+
+async function savePermissoes(){
+  const msg=document.getElementById('modal-perm-msg');
+  const newPerms={};
+  PERMS_DEF.forEach(d=>{newPerms[d.key]=document.getElementById('perm-'+d.key).checked;});
+  if(IS_DEMO){msg.className='auth-msg success';msg.textContent='✅ Permissões salvas (demo)!';setTimeout(closePermModal,1200);return;}
+  try{
+    await db.collection('usuarios').doc(editingPermUid).update({permissions:newPerms});
+    toast('✅ Permissões atualizadas!','success');
+    closePermModal();
+    renderUsuarios();
+  }catch(e){console.error(e);msg.className='auth-msg error';msg.textContent=`❌ ${e.message||'Erro ao salvar.'}`;}
+}
+
 // ── USUÁRIOS ──────────────────────────────────
 async function renderUsuarios(){
-  // restore content style after relatorio
   const c=document.getElementById('content');
   c.style.padding='36px 40px';c.style.display='block';c.style.overflow='auto';
   if(IS_DEMO){
     c.innerHTML=`<div class="card"><div class="card-header"><div class="card-title">Usuários Cadastrados</div></div>
-      <div class="table-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th></tr></thead>
-      <tbody>${demoUsers.map(u=>`<tr><td class="td-name">${u.name}</td><td>${u.email}</td>
-        <td>${u.role==='admin'?'<span class="badge badge-blue">👑 Admin</span>':'<span class="badge badge-gray">Usuário</span>'}</td></tr>`).join('')}
-      </tbody></table></div></div>`;
+      <div class="table-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Permissões</th></tr></thead>
+      <tbody>${demoUsers.map(u=>`<tr>
+        <td class="td-name">${u.name}</td><td>${u.email}</td>
+        <td>${u.role==='admin'?'<span class="badge badge-blue">👑 Admin</span>':'<span class="badge badge-gray">Usuário</span>'}</td>
+        <td>${u.role==='admin'?'<span style="font-size:12px;color:var(--text3)">Acesso total</span>':
+          `<div class="perm-badge-row">${PERMS_DEF.map(p=>`<span class="perm-tag ${(u.permissions||DEFAULT_PERMS)[p.key]!==false?'':'denied'}">${p.icon} ${p.label}</span>`).join('')}</div>`}
+        </td>
+      </tr>`).join('')}</tbody></table></div></div>`;
     return;
   }
   c.innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
   try{
     const snap=await db.collection('usuarios').get();
     const users=snap.docs.map(d=>({id:d.id,...d.data()}));
-    c.innerHTML=`<div class="card"><div class="card-header"><div class="card-title">Usuários Cadastrados <span style="font-size:14px;color:var(--text2);font-weight:400">(${users.length})</span></div></div>
-      <div class="table-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Ações</th></tr></thead>
-      <tbody>${users.map(u=>`<tr><td class="td-name">${u.name||'—'}</td><td>${u.email}</td>
-        <td>${u.role==='admin'?'<span class="badge badge-blue">👑 Admin</span>':'<span class="badge badge-gray">Usuário</span>'}</td>
-        <td>${currentUser.role==='admin'?`<button class="btn-xs ${u.role==='admin'?'btn-del':'btn-edit'}" onclick="toggleRole('${u.id}','${u.role}')">${u.role==='admin'?'Remover Admin':'Tornar Admin'}</button>`:'—'}</td>
-      </tr>`).join('')}</tbody></table></div></div>`;
+    const isAdmin=currentUser.role==='admin';
+    c.innerHTML=`<div class="card">
+      <div class="card-header">
+        <div class="card-title">Usuários Cadastrados <span style="font-size:14px;color:var(--text2);font-weight:400">(${users.length})</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Permissões</th>${isAdmin?'<th>Ações</th>':''}</tr></thead>
+        <tbody>${users.map(u=>{
+          const perms=u.permissions||DEFAULT_PERMS;
+          const permBadges=u.role==='admin'
+            ?'<span style="font-size:12px;color:var(--text3)">Acesso total</span>'
+            :`<div class="perm-badge-row">${PERMS_DEF.map(p=>`<span class="perm-tag ${perms[p.key]!==false?'':'denied'}">${p.icon} ${p.label}</span>`).join('')}</div>`;
+          const actions=isAdmin?`<td><div class="row-actions">
+            ${u.role!=='admin'?`<button class="btn-xs btn-edit" onclick='openPermModal("${u.id}","${(u.name||'').replace(/"/g,'')
+}","${u.email}",${JSON.stringify(perms)})'>🔐 Permissões</button>`:''}
+            <button class="btn-xs ${u.role==='admin'?'btn-del':'btn-edit'}" onclick="toggleRole('${u.id}','${u.role}')">${u.role==='admin'?'Remover Admin':'Tornar Admin'}</button>
+          </div></td>`:'';
+          return`<tr>
+            <td class="td-name">${u.name||'—'}</td>
+            <td>${u.email}</td>
+            <td>${u.role==='admin'?'<span class="badge badge-blue">👑 Admin</span>':'<span class="badge badge-gray">Usuário</span>'}</td>
+            <td>${permBadges}</td>
+            ${actions}
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div></div>`;
   }catch(e){c.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><p>Erro ao carregar usuários</p></div>`;}
 }
 async function toggleRole(uid,currentRole){
@@ -1942,7 +2119,6 @@ async function toggleRole(uid,currentRole){
   catch(e){toast('Erro ao atualizar.','error');}
 }
 
-// also restore content style when switching away from relatorio
 
 // ── TOAST ──────────────────────────────────────
 function toast(msg,type='success'){
