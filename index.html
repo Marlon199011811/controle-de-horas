@@ -703,6 +703,95 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
   text-decoration:line-through;opacity:.6;
 }
 
+/* ════════════════════════════════════════════
+   BANCO DE HORAS
+════════════════════════════════════════════ */
+.bh-top{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.bh-stat{
+  flex:1;min-width:160px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;
+}
+.bh-stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px}
+.bh-stat.green::after{background:linear-gradient(90deg,var(--success),transparent)}
+.bh-stat.yellow::after{background:linear-gradient(90deg,var(--warn),transparent)}
+.bh-stat.red::after{background:linear-gradient(90deg,var(--danger),transparent)}
+.bh-stat.blue::after{background:linear-gradient(90deg,var(--accent),transparent)}
+.bh-stat-icon{font-size:22px;margin-bottom:8px}
+.bh-stat-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px}
+.bh-stat-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--text);line-height:1}
+.bh-stat-sub{font-size:11.5px;color:var(--text3);margin-top:4px}
+
+.bh-snapshot-bar{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:14px 18px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);margin-bottom:20px;
+}
+.bh-snap-info{flex:1;min-width:0}
+.bh-snap-title{font-size:13.5px;font-weight:600;color:var(--text)}
+.bh-snap-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.bh-snap-none{font-size:13.5px;color:var(--text3);font-style:italic}
+.btn-bh-import{
+  padding:9px 18px;border-radius:9px;border:none;
+  background:rgba(79,142,247,.12);color:var(--accent);
+  font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px;white-space:nowrap;
+  border:1px solid rgba(79,142,247,.22);
+}
+.btn-bh-import:hover{background:rgba(79,142,247,.22)}
+
+/* Alert cards */
+.bh-alerts{margin-bottom:20px}
+.bh-alert-title{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.bh-alert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.bh-alert-card{
+  padding:13px 16px;border-radius:10px;
+  background:rgba(245,97,94,.06);border:1px solid rgba(245,97,94,.2);
+  display:flex;align-items:center;gap:12px;
+}
+.bh-alert-avatar{
+  width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  background:rgba(245,97,94,.15);color:var(--danger);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;
+}
+.bh-alert-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bh-alert-saldo{font-size:13px;font-weight:700;color:var(--danger)}
+
+/* Table saldo */
+.saldo-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 11px;border-radius:20px;font-size:13px;font-weight:700;
+  font-family:'Syne',sans-serif;white-space:nowrap;
+}
+.saldo-green{background:rgba(61,214,140,.1);color:var(--success);border:1px solid rgba(61,214,140,.2)}
+.saldo-yellow{background:rgba(245,167,66,.1);color:var(--warn);border:1px solid rgba(245,167,66,.2)}
+.saldo-red{background:rgba(245,97,94,.1);color:var(--danger);border:1px solid rgba(245,97,94,.2)}
+.saldo-zero{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+
+/* CSV Import modal */
+.csv-drop-zone{
+  border:2px dashed var(--border);border-radius:12px;padding:36px 20px;
+  text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);
+}
+.csv-drop-zone:hover,.csv-drop-zone.drag{border-color:var(--accent);background:rgba(79,142,247,.06)}
+.csv-drop-icon{font-size:36px;margin-bottom:10px;opacity:.5}
+.csv-drop-text{font-size:14px;color:var(--text2);font-weight:500}
+.csv-drop-sub{font-size:12px;color:var(--text3);margin-top:4px}
+.csv-preview{margin-top:16px;max-height:240px;overflow-y:auto}
+.csv-preview table{font-size:13px}
+.csv-match{color:var(--success)}
+.csv-nomatch{color:var(--warn)}
+.csv-date-row{
+  display:flex;align-items:center;gap:12px;margin-bottom:16px;
+  padding:13px 16px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);
+}
+.csv-date-row label{font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;letter-spacing:.3px;text-transform:uppercase}
+.csv-date-row input{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:8px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;
+  outline:none;transition:border-color .2s;
+}
+.csv-date-row input:focus{border-color:var(--accent)}
+
 /* table header in rel panel */
 .panel-thead{
   padding:12px 18px;background:var(--surface2);border-bottom:1px solid var(--border);
@@ -762,6 +851,7 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
         <button class="nav-item active" id="nav-dashboard"   onclick="showPage('dashboard')"><span class="icon">📊</span>Dashboard</button>
         <button class="nav-item"        id="nav-lancamentos" onclick="showPage('lancamentos')"><span class="icon">📝</span>Lançamentos</button>
         <button class="nav-item"        id="nav-relatorio"   onclick="showPage('relatorio')"><span class="icon">📋</span>Relatório</button>
+        <button class="nav-item"        id="nav-bancohoras"  onclick="showPage('bancohoras')"><span class="icon">🏦</span>Banco de Horas</button>
         <div class="nav-divider"></div>
         <div class="sidebar-section-label">Configurações</div>
         <button class="nav-item"        id="nav-colaboradores" onclick="showPage('colaboradores')"><span class="icon">🧑‍💼</span>Colaboradores</button>
@@ -929,6 +1019,50 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeColabModal()">Cancelar</button>
       <button class="btn-primary" style="padding:12px 36px;margin-top:0" onclick="saveColaborador()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR BANCO DE HORAS -->
+<div class="modal-overlay" id="modal-bh-import">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-title">📤 Importar Saldo — Banco de Horas</div>
+      <button class="modal-close" onclick="closeBhImportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Data de referência -->
+      <div class="csv-date-row">
+        <label>Data de Referência do Saldo</label>
+        <input type="date" id="bh-ref-date"/>
+        <span style="font-size:12px;color:var(--text3);flex:1">Lançamentos após esta data serão descontados do saldo.</span>
+      </div>
+      <!-- Drop zone -->
+      <div class="csv-drop-zone" id="bh-drop-zone"
+        onclick="document.getElementById('bh-file-input').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleBhDrop(event)">
+        <div class="csv-drop-icon">📂</div>
+        <div class="csv-drop-text">Clique ou arraste o arquivo CSV aqui</div>
+        <div class="csv-drop-sub">Formatos aceitos: CSV com colunas Nome e Saldo (HH:MM ou decimal)</div>
+      </div>
+      <input type="file" id="bh-file-input" accept=".csv,.txt" style="display:none" onchange="handleBhFile(this.files[0])"/>
+      <!-- Preview -->
+      <div id="bh-preview" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px">
+          <span style="font-size:13px;font-weight:600;color:var(--text)" id="bh-preview-summary"></span>
+          <button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="resetBhImport()">✕ Limpar</button>
+        </div>
+        <div class="csv-preview">
+          <div class="table-wrap" id="bh-preview-table"></div>
+        </div>
+      </div>
+      <div id="modal-bh-msg" class="auth-msg" style="margin-top:12px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeBhImportModal()">Cancelar</button>
+      <button class="btn-primary" id="btn-bh-confirm" style="padding:12px 36px;margin-top:0" onclick="confirmBhImport()" disabled>Confirmar Importação</button>
     </div>
   </div>
 </div>
@@ -1158,6 +1292,7 @@ const PAGE_META={
   dashboard:    {title:'Dashboard',sub:'Visão geral dos registros'},
   lancamentos:  {title:'Lançamentos',sub:'Gerencie todas as ausências'},
   relatorio:    {title:'Relatório',sub:'Análise e exportação dos dados'},
+  bancohoras:   {title:'Banco de Horas',sub:'Saldo e controle por colaborador'},
   colaboradores:{title:'Colaboradores',sub:'Cadastro de colaboradores e funções'},
   usuarios:     {title:'Usuários',sub:'Contas cadastradas no sistema'},
 };
@@ -1192,6 +1327,7 @@ function showPage(page){
     renderLancamentos();
   } else if(page==='dashboard'){      ta.innerHTML=themeBtn; renderDashboard(); }
   else if(page==='relatorio'){        ta.innerHTML=themeBtn; renderRelatorio(); }
+  else if(page==='bancohoras'){       ta.innerHTML=themeBtn; renderBancoHoras(); }
   else if(page==='colaboradores'){
     ta.innerHTML=`<button class="btn-primary" style="padding:10px 24px;font-size:14px;margin-top:0" onclick="openColabModal()">+ Novo Colaborador</button>${themeBtn}`;
     renderColaboradores();
@@ -1295,38 +1431,88 @@ function renderDashboardContent(){
   if(dashFilters.motivo) tags.push(`🏷️ ${dashFilters.motivo}`);
   const stripHTML=tags.length?`<div class="dash-filter-strip">${tags.map(t=>`<span class="dash-filter-active-tag">${t}</span>`).join('')}</div>`:`<div class="dash-filter-strip"></div>`;
 
-  // Distribuição por motivo — in HOURS
-  const horasMot={'Banco de Horas':0,'Folga':0,'Atestado':0,'Declaração':0};
+  // Distribuição por motivo — in HOURS (all motivos present in filtered records)
+  const horasMot={};
   recs.forEach(r=>{
-    const m=Object.keys(horasMot).includes(r.motivo)?r.motivo:null;
-    if(m) horasMot[m]+=workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||'');
+    const m=r.motivo||'Outros';
+    horasMot[m]=(horasMot[m]||0)+workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||'');
   });
   const totalHorasMot=Object.values(horasMot).reduce((a,b)=>a+b,0)||1;
-  const colors=['var(--accent)','var(--accent2)','var(--danger)','var(--accent3)'];
-  const motivoRows=Object.keys(horasMot).map((m,i)=>{
-    const h=horasMot[m];const pct=Math.round(h/totalHorasMot*100);
-    return`<div style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:13.5px;font-weight:500;color:var(--text)">${m}</span>
-        <span style="font-size:13px;color:var(--text2)">${fmtHours(h)} <span style="color:var(--text3);font-size:11.5px">(${pct}%)</span></span>
-      </div>
-      <div style="height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border)">
-        <div style="height:100%;width:${pct}%;background:${colors[i]};border-radius:4px;transition:width .6s ease"></div>
-      </div>
-    </div>`;
-  }).join('');
+  const colors=['var(--accent)','var(--accent2)','var(--danger)','var(--accent3)','var(--success)','#a78bfa','#f59e0b','#06b6d4'];
+  const motivoRows=Object.entries(horasMot)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([m,h],i)=>{
+      const pct=Math.round(h/totalHorasMot*100);
+      return`<div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:13.5px;font-weight:500;color:var(--text)">${m}</span>
+          <span style="font-size:13px;color:var(--text2)">${fmtHours(h)} <span style="color:var(--text3);font-size:11.5px">(${pct}%)</span></span>
+        </div>
+        <div style="height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border)">
+          <div style="height:100%;width:${pct}%;background:${colors[i%colors.length]};border-radius:4px;transition:width .6s ease"></div>
+        </div>
+      </div>`;
+    }).join('')||'<div style="color:var(--text3);font-size:13px">Nenhum registro no período.</div>';
+
+  // Saldo BH do colaborador filtrado
+  let saldoBHCard = '';
+  if(dashFilters.colab && activeSnapshot){
+    const saldo = calcSaldoAtual(dashFilters.colab, activeSnapshot, allRecords);
+    if(saldo !== null){
+      const pill = saldoPill(saldo);
+      const usadoAposRef = allRecords
+        .filter(r=>r.motivo==='Banco de Horas' && r.inicio > activeSnapshot.dataReferencia &&
+          r.nome.toUpperCase().includes(dashFilters.colab.toUpperCase().substring(0,8)))
+        .reduce((s,r)=>s+workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||''),0);
+      const saldoBase = activeSnapshot.saldos[dashFilters.colab.toUpperCase().trim()] ??
+        (() => { const k=Object.keys(activeSnapshot.saldos).find(k=>k.includes(dashFilters.colab.toUpperCase().substring(0,8))); return k?activeSnapshot.saldos[k]:null; })();
+      saldoBHCard = `
+        <div class="card" style="margin-bottom:20px;border-left:3px solid var(--accent)">
+          <div class="card-header" style="padding-bottom:0">
+            <div class="card-title">🏦 Banco de Horas — ${dashFilters.colab}</div>
+            <span style="font-size:11.5px;color:var(--text3)">Ref: ${fmtDate(activeSnapshot.dataReferencia)}</span>
+          </div>
+          <div class="card-body" style="padding:16px 22px">
+            <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:center">
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Saldo no CSV</div>
+                <div style="font-size:20px;font-weight:800;font-family:'Syne',sans-serif;color:var(--text)">${saldoBase!==null?(saldoBase<0?'−':'+')+fmtHours(Math.abs(saldoBase)):'—'}</div>
+              </div>
+              <div style="font-size:20px;color:var(--text3)">−</div>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Usado após ref.</div>
+                <div style="font-size:20px;font-weight:800;font-family:'Syne',sans-serif;color:var(--danger)">${usadoAposRef>0?fmtHours(usadoAposRef):'—'}</div>
+              </div>
+              <div style="font-size:20px;color:var(--text3)">=</div>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Saldo Atual</div>
+                <div style="font-size:24px">${pill}</div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+  } else if(dashFilters.colab && !activeSnapshot){
+    saldoBHCard = `
+      <div class="card" style="margin-bottom:20px;border-left:3px solid var(--border)">
+        <div class="card-body" style="padding:14px 20px;display:flex;align-items:center;gap:10px;color:var(--text3);font-size:13.5px">
+          🏦 <span>Nenhum snapshot de Banco de Horas importado. <button class="btn-secondary" style="font-size:12px;padding:5px 12px;margin-left:6px" onclick="showPage('bancohoras')">Importar CSV →</button></span>
+        </div>
+      </div>`;
+  }
 
   const dashBody=document.getElementById('dash-body');
   if(!dashBody) return;
   dashBody.innerHTML=`
     ${stripHTML}
+    ${saldoBHCard}
     <div class="stats-row">
       <div class="stat-card"><span class="stat-icon">📁</span><div class="stat-label">Total de Registros</div><div class="stat-value">${recs.length}</div><div class="stat-sub">${tags.length?'filtrado':'todos os períodos'}</div></div>
       <div class="stat-card"><span class="stat-icon">📅</span><div class="stat-label">No Mês Atual</div><div class="stat-value">${doMes}</div><div class="stat-sub">${new Date().toLocaleString('pt-BR',{month:'long',year:'numeric'})}</div></div>
       <div class="stat-card"><span class="stat-icon">⏱️</span><div class="stat-label">Banco de Horas</div><div class="stat-value">${bm['Banco de Horas']||0}</div><div class="stat-sub">lançamentos</div></div>
       <div class="stat-card"><span class="stat-icon">🩺</span><div class="stat-label">Atestados</div><div class="stat-value">${bm['Atestado']||0}</div><div class="stat-sub">lançamentos</div></div>
       <div class="stat-card"><span class="stat-icon">☀️</span><div class="stat-label">Folgas</div><div class="stat-value">${bm['Folga']||0}</div><div class="stat-sub">lançamentos</div></div>
-      <div class="stat-card"><span class="stat-icon">🕐</span><div class="stat-label">Total de Horas</div><div class="stat-value" style="font-size:26px">${fmtHours(totalHoras)}</div><div class="stat-sub">${uniqColab} colaborador${uniqColab!==1?'es':''}</div></div>
+      <div class="stat-card"><span class="stat-icon">🕐</span><div class="stat-label">Total de Horas Compensadas</div><div class="stat-value" style="font-size:26px">${fmtHours(totalHoras)}</div><div class="stat-sub">${uniqColab} colaborador${uniqColab!==1?'es':''}</div></div>
     </div>
     <div class="dash-bottom">
       <div class="card">
@@ -1347,6 +1533,7 @@ function renderDashboardContent(){
 async function renderDashboard(){
   document.getElementById('content').innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
   await loadRecords();
+  await loadSnapshot();
   // Sync filter state to inputs if filters were set before
   const colabOptions=[...new Set([...allColaboradores.map(c=>c.nome),...allRecords.map(r=>r.nome)])].sort();
   document.getElementById('content').innerHTML=`
@@ -1991,17 +2178,342 @@ function hideColabSuggestions(){
   if(box) box.style.display='none';
 }
 
+// ══════════════════════════════════════════════
+// BANCO DE HORAS
+// ══════════════════════════════════════════════
+let activeSnapshot = null;   // {dataReferencia, saldos:{nome->horas}, importadoEm, id}
+let bhParsedData   = null;   // staging during CSV import
+
+// ── Parse helpers ─────────────────────────────
+function parseHHMM(str){
+  // Handles "HH:MM", "-HH:MM", "+HH:MM", decimal "12.5", "-12.5"
+  if(!str) return null;
+  str = str.trim().replace(',','.');
+  const neg = str.startsWith('-');
+  const abs = str.replace(/^[+-]/,'');
+  if(abs.includes(':')){
+    const [h,m] = abs.split(':').map(Number);
+    return (isNaN(h)||isNaN(m)) ? null : (neg?-1:1)*(h + m/60);
+  }
+  const n = parseFloat(abs);
+  return isNaN(n) ? null : (neg?-1:1)*n;
+}
+
+// Proper CSV row parser that handles quoted fields with commas inside
+function parseCSVRow(line){
+  const cols=[];
+  let cur='', inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){ inQ=!inQ; continue; }
+    if(ch===','&&!inQ){ cols.push(cur.trim()); cur=''; continue; }
+    cur+=ch;
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
+function parseBhCSV(text){
+  const lines = text.replace(/^\uFEFF/,'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+
+  // Find the header row — must contain "Nome" and "Saldo BH"
+  let headerIdx=-1, cols=[];
+  for(let i=0;i<Math.min(10,lines.length);i++){
+    const row = parseCSVRow(lines[i]);
+    const lower = row.map(c=>c.toLowerCase());
+    if(lower.some(c=>c==='nome'||c.includes('colaborador')) &&
+       lower.some(c=>c==='saldo bh'||c.includes('saldo bh'))){
+      headerIdx=i; cols=row.map(c=>c.toLowerCase().trim()); break;
+    }
+  }
+  if(headerIdx<0)
+    return {error:'Cabeçalho não encontrado. O CSV precisa ter colunas "Nome" e "Saldo BH".'};
+
+  const iNome  = cols.findIndex(c=>c==='nome'||c.includes('colaborador'));
+  // "Saldo BH" — exact match preferred, then partial (avoid "Saldo BH Negativo")
+  let iSaldo = cols.findIndex(c=>c==='saldo bh');
+  if(iSaldo<0) iSaldo = cols.findIndex(c=>c.startsWith('saldo bh')&&!c.includes('negativo'));
+  if(iSaldo<0) iSaldo = cols.findIndex(c=>c.includes('saldo')&&!c.includes('negativo')&&!c.includes('inicial'));
+
+  if(iNome<0||iSaldo<0)
+    return {error:`Colunas necessárias não encontradas. Encontrado: ${cols.join(' | ')}`};
+
+  const rows=[];
+  const SKIP_WORDS=['resumo','total','totais','subtotal'];
+  for(let i=headerIdx+1;i<lines.length;i++){
+    const row=parseCSVRow(lines[i]);
+    const nome=(row[iNome]||'').trim();
+    if(!nome) continue;
+    if(SKIP_WORDS.some(w=>nome.toLowerCase().startsWith(w))) continue;
+    // Skip lines that look like numeric-only summary rows
+    if(/^[\d.]+$/.test(nome)) continue;
+    const raw=(row[iSaldo]||'').trim();
+    const horas=parseHHMM(raw);
+    rows.push({nome, raw, horas});
+  }
+  if(!rows.length) return {error:'Nenhum dado de colaborador encontrado após o cabeçalho.'};
+  return {rows, colSaldo: cols[iSaldo]};
+}
+
+// ── Snapshot load/save ────────────────────────
+async function loadSnapshot(){
+  if(IS_DEMO){ activeSnapshot=null; return; }
+  try{
+    const snap = await db.collection('bancohoras_snapshots')
+      .orderBy('criadoEm','desc').limit(1).get();
+    if(!snap.empty){
+      const d=snap.docs[0];
+      activeSnapshot={id:d.id,...d.data()};
+    } else { activeSnapshot=null; }
+  }catch(e){ activeSnapshot=null; console.error('loadSnapshot:',e); }
+}
+
+// ── Saldo calculation ─────────────────────────
+function calcSaldoAtual(nomeColaborador, snapshot, records){
+  if(!snapshot) return null;
+  // Normalize name for fuzzy match
+  const norm = s => s.toUpperCase().trim();
+  const saldoBase = (() => {
+    const exact = snapshot.saldos[norm(nomeColaborador)];
+    if(exact !== undefined) return exact;
+    // Try partial match
+    const k = Object.keys(snapshot.saldos).find(k=>norm(k).includes(norm(nomeColaborador)) || norm(nomeColaborador).includes(norm(k)));
+    return k !== undefined ? snapshot.saldos[k] : null;
+  })();
+  if(saldoBase === null) return null;
+  // Sum hours of "Banco de Horas" lançamentos AFTER dataReferencia
+  const ref = snapshot.dataReferencia; // 'YYYY-MM-DD'
+  const usado = records
+    .filter(r => r.motivo==='Banco de Horas' && r.inicio > ref &&
+                 norm(r.nome).includes(norm(nomeColaborador).substring(0,8)))
+    .reduce((s,r)=>s+workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||''),0);
+  return saldoBase - usado;
+}
+
+function saldoPill(h){
+  if(h===null) return `<span class="saldo-zero">—</span>`;
+  const fmt = fmtHours(Math.abs(h));
+  const sign = h>=0?'+':'-';
+  if(h>4)    return `<span class="saldo-pill saldo-green">🟢 ${sign}${fmt}</span>`;
+  if(h>=0)   return `<span class="saldo-pill saldo-yellow">🟡 ${sign}${fmt}</span>`;
+  if(h>=-4)  return `<span class="saldo-pill saldo-yellow">🟡 ${sign}${fmt}</span>`;
+  return       `<span class="saldo-pill saldo-red">🔴 ${sign}${fmt}</span>`;
+}
+
+// ── Render page ───────────────────────────────
+async function renderBancoHoras(){
+  const c = document.getElementById('content');
+  c.innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
+  await loadRecords();
+  await loadSnapshot();
+
+  // Build saldo per collaborator
+  const colabs = allColaboradores.length ? allColaboradores :
+    [...new Set(allRecords.map(r=>r.nome))].map(n=>({nome:n}));
+
+  const rows = colabs.map(col=>{
+    const saldo = calcSaldoAtual(col.nome, activeSnapshot, allRecords);
+    const usado = allRecords
+      .filter(r=>r.motivo==='Banco de Horas' && r.nome.toUpperCase().includes(col.nome.toUpperCase().substring(0,8)))
+      .reduce((s,r)=>s+workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||''),0);
+    return {nome:col.nome, funcao:col.funcao||'—', saldo, usado};
+  });
+
+  const negativos = rows.filter(r=>r.saldo!==null && r.saldo<0);
+  const positivos = rows.filter(r=>r.saldo!==null && r.saldo>=0);
+  const semSnapshot = rows.filter(r=>r.saldo===null);
+
+  // Stats
+  const totalNeg = negativos.length;
+  const totalPos = positivos.length;
+  const mediaPos = positivos.length ? positivos.reduce((s,r)=>s+r.saldo,0)/positivos.length : 0;
+
+  // Snapshot bar
+  const snapBar = activeSnapshot
+    ? `<div class="bh-snap-info">
+        <div class="bh-snap-title">📸 Snapshot ativo: <strong>${fmtDate(activeSnapshot.dataReferencia)}</strong></div>
+        <div class="bh-snap-meta">Importado em ${activeSnapshot.importadoEm||'—'} · ${Object.keys(activeSnapshot.saldos||{}).length} colaboradores</div>
+       </div>`
+    : `<div class="bh-snap-info"><div class="bh-snap-none">Nenhum snapshot importado. Importe um CSV para calcular os saldos.</div></div>`;
+
+  // Alerts
+  const alertsHTML = negativos.length ? `
+    <div class="bh-alerts">
+      <div class="bh-alert-title">⚠️ Colaboradores com saldo negativo (${negativos.length})</div>
+      <div class="bh-alert-grid">
+        ${negativos.map(r=>`
+          <div class="bh-alert-card">
+            <div class="bh-alert-avatar">${r.nome[0]}</div>
+            <div style="min-width:0">
+              <div class="bh-alert-name" title="${r.nome}">${r.nome}</div>
+              <div class="bh-alert-saldo">${fmtHours(Math.abs(r.saldo))} negativo</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  // Table rows
+  const tableRows = rows.map(r=>`<tr>
+    <td class="td-name">${r.nome}</td>
+    <td class="td-muted">${r.funcao}</td>
+    <td style="text-align:center">${activeSnapshot ? fmtHours(activeSnapshot.saldos[r.nome.toUpperCase().trim()]??null) : '—'}</td>
+    <td style="text-align:center;color:var(--danger)">${r.usado>0?'-'+fmtHours(r.usado):'—'}</td>
+    <td style="text-align:center">${saldoPill(r.saldo)}</td>
+  </tr>`).join('');
+
+  c.innerHTML=`
+    <!-- Stats -->
+    <div class="bh-top">
+      <div class="bh-stat blue"><div class="bh-stat-icon">📸</div><div class="bh-stat-label">Snapshot</div>
+        <div class="bh-stat-val" style="font-size:18px">${activeSnapshot?fmtDate(activeSnapshot.dataReferencia):'—'}</div>
+        <div class="bh-stat-sub">data de referência</div></div>
+      <div class="bh-stat green"><div class="bh-stat-icon">🟢</div><div class="bh-stat-label">Saldo Positivo</div>
+        <div class="bh-stat-val">${totalPos}</div><div class="bh-stat-sub">colaboradores</div></div>
+      <div class="bh-stat red"><div class="bh-stat-icon">🔴</div><div class="bh-stat-label">Saldo Negativo</div>
+        <div class="bh-stat-val">${totalNeg}</div><div class="bh-stat-sub">requer atenção</div></div>
+      <div class="bh-stat yellow"><div class="bh-stat-icon">⏱️</div><div class="bh-stat-label">Média (positivos)</div>
+        <div class="bh-stat-val" style="font-size:22px">${positivos.length?fmtHours(mediaPos):'—'}</div>
+        <div class="bh-stat-sub">saldo médio</div></div>
+    </div>
+
+    <!-- Snapshot bar -->
+    <div class="bh-snapshot-bar">
+      ${snapBar}
+      <button class="btn-bh-import" onclick="openBhImportModal()">📤 ${activeSnapshot?'Novo Snapshot':'Importar CSV'}</button>
+    </div>
+
+    ${alertsHTML}
+
+    <!-- Table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Saldo por Colaborador</div>
+        <span style="font-size:12.5px;color:var(--text3)">${activeSnapshot?`Ref: ${fmtDate(activeSnapshot.dataReferencia)}`:'Sem snapshot'}</span>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr>
+          <th>Colaborador</th><th>Função</th>
+          <th style="text-align:center">Saldo Base (CSV)</th>
+          <th style="text-align:center">Usado após ref.</th>
+          <th style="text-align:center">Saldo Atual</th>
+        </tr></thead><tbody>${tableRows}</tbody></table>
+      </div>
+    </div>`;
+}
+
+// ── CSV Import modal ──────────────────────────
+function openBhImportModal(){
+  bhParsedData=null;
+  const today=new Date().toISOString().slice(0,10);
+  const dateEl=document.getElementById('bh-ref-date');
+  if(dateEl) dateEl.value=today;
+  document.getElementById('bh-preview').style.display='none';
+  document.getElementById('modal-bh-msg').className='auth-msg';
+  document.getElementById('btn-bh-confirm').disabled=true;
+  document.getElementById('bh-file-input').value='';
+  document.getElementById('bh-drop-zone').style.display='block';
+  document.getElementById('modal-bh-import').classList.add('open');
+}
+function closeBhImportModal(){document.getElementById('modal-bh-import').classList.remove('open');}
+function resetBhImport(){
+  bhParsedData=null;
+  document.getElementById('bh-preview').style.display='none';
+  document.getElementById('bh-drop-zone').style.display='block';
+  document.getElementById('btn-bh-confirm').disabled=true;
+  document.getElementById('modal-bh-msg').className='auth-msg';
+  document.getElementById('bh-file-input').value='';
+}
+function handleBhDrop(e){
+  e.preventDefault();
+  document.getElementById('bh-drop-zone').classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file) handleBhFile(file);
+}
+function handleBhFile(file){
+  if(!file){return;}
+  const reader=new FileReader();
+  reader.onload=ev=>processBhCSV(ev.target.result);
+  reader.readAsText(file,'UTF-8');
+}
+function processBhCSV(text){
+  const msg=document.getElementById('modal-bh-msg');
+  msg.className='auth-msg';
+  const result=parseBhCSV(text);
+  if(result.error){
+    msg.className='auth-msg error';msg.textContent='❌ '+result.error;return;
+  }
+  bhParsedData=result.rows;
+  // Match against allColaboradores
+  const normColab=new Set(allColaboradores.map(c=>c.nome.toUpperCase().trim()));
+  const matched=result.rows.filter(r=>normColab.has(r.nome.toUpperCase().trim())||
+    [...normColab].some(k=>k.includes(r.nome.toUpperCase().trim().substring(0,8))));
+  const unmatched=result.rows.filter(r=>!matched.includes(r));
+
+  document.getElementById('bh-drop-zone').style.display='none';
+  document.getElementById('bh-preview').style.display='block';
+  document.getElementById('bh-preview-summary').textContent=
+    `${result.rows.length} registros · Coluna: "${result.colSaldo||'Saldo BH'}" · ✅ ${matched.length} reconhecidos · ⚠️ ${unmatched.length} não encontrados`;
+
+  const rows=result.rows.map(r=>{
+    const ok=normColab.has(r.nome.toUpperCase().trim())||[...normColab].some(k=>k.includes(r.nome.toUpperCase().trim().substring(0,8)));
+    const hFmt = r.horas!==null
+      ? `${r.horas<0?'−':'+'}${fmtHours(Math.abs(r.horas))}`
+      : `❌ "${r.raw}" (inválido)`;
+    return`<tr>
+      <td class="${ok?'csv-match':'csv-nomatch'}" style="font-weight:600">${ok?'✅':'⚠️'} ${r.nome}</td>
+      <td style="text-align:center">${hFmt}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('bh-preview-table').innerHTML=
+    `<table><thead><tr><th>Nome</th><th style="text-align:center">Saldo</th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.getElementById('btn-bh-confirm').disabled=false;
+}
+
+async function confirmBhImport(){
+  const refDate=document.getElementById('bh-ref-date').value;
+  const msg=document.getElementById('modal-bh-msg');
+  if(!refDate){msg.className='auth-msg error';msg.textContent='Selecione a data de referência.';return;}
+  if(!bhParsedData||!bhParsedData.length){msg.className='auth-msg error';msg.textContent='Nenhum dado para importar.';return;}
+  // Build saldos map: NOME_UPPERCASE -> horas
+  const saldos={};
+  bhParsedData.forEach(r=>{if(r.horas!==null)saldos[r.nome.toUpperCase().trim()]=r.horas;});
+  const importadoEm=new Date().toLocaleString('pt-BR');
+  if(IS_DEMO){
+    activeSnapshot={id:'snap_demo',dataReferencia:refDate,saldos,importadoEm,criadoEm:new Date()};
+    toast('✅ Snapshot importado (demo)!','success');
+    closeBhImportModal(); renderBancoHoras(); return;
+  }
+  try{
+    document.getElementById('btn-bh-confirm').disabled=true;
+    document.getElementById('btn-bh-confirm').textContent='⏳ Salvando…';
+    await db.collection('bancohoras_snapshots').add({
+      dataReferencia:refDate, saldos,importadoEm,
+      importadoPor:currentUser.uid,
+      criadoEm:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await loadSnapshot();
+    toast('✅ Snapshot salvo com sucesso!','success');
+    closeBhImportModal(); renderBancoHoras();
+  }catch(e){
+    console.error(e);
+    msg.className='auth-msg error';msg.textContent=`❌ ${e.message||'Erro ao salvar.'}`;
+    document.getElementById('btn-bh-confirm').disabled=false;
+    document.getElementById('btn-bh-confirm').textContent='Confirmar Importação';
+  }
+}
+
 // ── PERMISSIONS SYSTEM ────────────────────────
 // Each permission key maps to a page/feature
 const PERMS_DEF = [
   {key:'dashboard',    icon:'📊', label:'Dashboard',      desc:'Visão geral e estatísticas'},
   {key:'lancamentos',  icon:'📝', label:'Lançamentos',    desc:'Criar, editar e excluir registros'},
   {key:'relatorio',    icon:'📋', label:'Relatório',      desc:'Consultar e exportar relatórios'},
+  {key:'bancohoras',   icon:'🏦', label:'Banco de Horas', desc:'Ver saldo e importar snapshots'},
   {key:'colaboradores',icon:'🧑‍💼', label:'Colaboradores',  desc:'Gerenciar lista de colaboradores'},
   {key:'usuarios',     icon:'👥', label:'Usuários',       desc:'Gerenciar usuários do sistema'},
 ];
 // Defaults for new users (non-admin)
-const DEFAULT_PERMS = {dashboard:true, lancamentos:true, relatorio:false, colaboradores:false, usuarios:false};
+const DEFAULT_PERMS = {dashboard:true, lancamentos:true, relatorio:false, bancohoras:false, colaboradores:false, usuarios:false};
 
 function hasPermission(page){
   if(!currentUser) return false;
