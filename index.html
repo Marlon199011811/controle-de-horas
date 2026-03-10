@@ -5,9 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SysFolgas – Controle de Ausências</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+// Firebase loaded lazily only when not in demo mode
+function loadFirebase(cb){
+  const scripts=[
+    'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js',
+    'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'
+  ];
+  let loaded=0;
+  scripts.forEach(src=>{
+    const s=document.createElement('script');
+    s.src=src;
+    s.onload=()=>{if(++loaded===scripts.length)cb();};
+    s.onerror=()=>console.warn('Firebase script failed:',src);
+    document.head.appendChild(s);
+  });
+}
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -480,6 +495,67 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:420px;max-width:96vw;padding:34px;box-shadow:var(--shadow)}
 .panel h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:22px;color:var(--text)}
 
+/* ════════════════════════════════════════════
+   DASHBOARD FILTERS BAR
+════════════════════════════════════════════ */
+.dash-filters{
+  display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;
+  padding:18px 0 22px;
+}
+.dash-filter-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px;max-width:220px}
+.dash-filter-group.grow{flex:2;max-width:280px}
+.dash-filter-label{font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+.dash-filter-group input,
+.dash-filter-group select{
+  background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:13.5px;outline:none;transition:border-color .2s;width:100%;
+}
+.dash-filter-group input:focus,
+.dash-filter-group select:focus{border-color:var(--accent)}
+.dash-filter-group select option{background:var(--surface);color:var(--text)}
+.btn-dash-filter{
+  padding:9px 20px;border-radius:9px;border:none;
+  background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:opacity .2s;
+  white-space:nowrap;flex-shrink:0;align-self:flex-end;
+}
+.btn-dash-filter:hover{opacity:.88}
+.btn-dash-clear{
+  padding:9px 14px;border-radius:9px;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text2);font-family:'DM Sans',sans-serif;
+  font-size:13.5px;font-weight:500;cursor:pointer;transition:all .2s;
+  white-space:nowrap;flex-shrink:0;align-self:flex-end;
+}
+.btn-dash-clear:hover{background:var(--surface3);color:var(--text)}
+.dash-filter-active-tag{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 10px;
+  border-radius:20px;background:rgba(79,142,247,.12);
+  color:var(--accent);font-size:12px;font-weight:600;border:1px solid rgba(79,142,247,.22);
+  white-space:nowrap;
+}
+.dash-filter-strip{
+  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;min-height:0;
+}
+.dash-filter-strip:empty{margin-bottom:0}
+
+/* Responsive dashboard grid */
+@media(max-width:1400px){
+  .stats-row{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:900px){
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .dash-bottom{grid-template-columns:1fr}
+  .dash-filters{flex-direction:column;gap:10px}
+  .dash-filter-group,.dash-filter-group.grow{max-width:100%;flex:unset;width:100%}
+}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:1fr}
+  .content{padding:20px 16px}
+  .topbar{padding:0 18px}
+}
+
 /* table header in rel panel */
 .panel-thead{
   padding:12px 18px;background:var(--surface2);border-bottom:1px solid var(--border);
@@ -487,63 +563,6 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
 }
 .panel-thead-title{font-size:14px;font-weight:600;color:var(--text2)}
 .panel-count{font-size:12.5px;color:var(--text3)}
-
-/* ════════════════════════════════════════════
-   DASHBOARD FILTERS
-════════════════════════════════════════════ */
-.dash-filter-bar{
-  display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;
-  margin-bottom:20px;padding:18px 24px;
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);transition:background .22s,border-color .22s;
-}
-.dash-filter-bar .filter-group input,
-.dash-filter-bar .filter-group select{
-  background:var(--surface2);border:1px solid var(--border);border-radius:9px;
-  padding:9px 13px;color:var(--text);font-family:'DM Sans',sans-serif;
-  font-size:13.5px;outline:none;transition:border-color .2s;
-}
-.dash-filter-bar .filter-group input{min-width:148px}
-.dash-filter-bar .filter-group select{min-width:190px}
-.dash-filter-bar .filter-group input:focus,
-.dash-filter-bar .filter-group select:focus{border-color:var(--accent)}
-.dash-filter-bar .filter-label{font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px}
-.btn-dash-filter{
-  padding:9px 20px;border-radius:9px;border:none;
-  background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;
-  font-size:13.5px;font-weight:600;cursor:pointer;transition:opacity .2s;white-space:nowrap;
-}
-.btn-dash-filter:hover{opacity:.88}
-.btn-clear-dash{
-  padding:9px 16px;border-radius:9px;border:1px solid var(--border);
-  background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;
-  font-size:13.5px;font-weight:500;cursor:pointer;transition:all .2s;
-  display:flex;align-items:center;gap:6px;white-space:nowrap;
-}
-.btn-clear-dash:hover{background:var(--surface3);color:var(--text)}
-.dash-context-banner{
-  padding:16px 22px;border-radius:var(--radius);margin-bottom:20px;
-  background:linear-gradient(135deg,rgba(79,142,247,.1),rgba(46,232,196,.06));
-  border:1px solid rgba(79,142,247,.22);
-  display:flex;align-items:center;gap:16px;animation:fadeSlide .25s ease;
-}
-.dash-context-avatar{
-  width:46px;height:46px;border-radius:12px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  display:flex;align-items:center;justify-content:center;
-  font-size:20px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:0;
-}
-.dash-context-info h3{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)}
-.dash-context-info p{font-size:13px;color:var(--text2);margin-top:3px}
-.dash-context-chips{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
-.dash-chip{
-  padding:5px 13px;border-radius:20px;font-size:12px;font-weight:700;
-  background:rgba(79,142,247,.14);color:var(--accent);border:1px solid rgba(79,142,247,.22);
-}
-.dash-chip.chip-green{background:rgba(61,214,140,.12);color:var(--success);border-color:rgba(61,214,140,.25)}
-.dash-chip.chip-yellow{background:rgba(245,197,66,.12);color:var(--accent3);border-color:rgba(245,197,66,.25)}
-@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-
 </style>
 </head>
 <body>
@@ -569,7 +588,7 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
       <div class="ff"><label>Senha</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div id="login-msg" class="auth-msg"></div>
       <button class="btn-primary" onclick="doLogin()">Entrar no Sistema</button>
-      <div class="admin-hint"><strong>Usuário Admin Padrão:</strong><br/>E-mail: <strong>admin@sysfolgas.com</strong><br/>Senha: <strong>Admin@2024</strong></div>
+
     </div>
     <div id="form-register" class="auth-form" style="display:none">
       <div class="ff"><label>Nome Completo</label><input type="text" id="reg-name" placeholder="João da Silva"/></div>
@@ -650,9 +669,10 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
         <div class="form-field"><label>Função / Cargo *</label><input type="text" id="f-funcao" placeholder="Ex: Analista"/></div>
       </div>
       <div class="form-row">
-        <div class="form-field"><label>Data Início *</label><input type="date" id="f-inicio"/></div>
-        <div class="form-field"><label>Data Fim *</label><input type="date" id="f-fim"/></div>
+        <div class="form-field"><label>Data Início *</label><input type="date" id="f-inicio" oninput="updateWorkingDaysInfo()"/></div>
+        <div class="form-field"><label>Data Fim *</label><input type="date" id="f-fim" oninput="updateWorkingDaysInfo()"/></div>
       </div>
+      <div id="working-days-info" style="display:none;padding:9px 14px;border-radius:9px;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);font-size:13px;color:var(--accent);font-weight:500;text-align:center"></div>
 
       <!-- TIPO: INTEGRAL / PARCIAL -->
       <div class="form-field">
@@ -732,15 +752,15 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
 
 <div id="toast-container"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false"></script><script>
 // ══ FIREBASE CONFIG ══ substitua pelos seus dados ══
 const firebaseConfig = {
-  apiKey:"AIzaSyCET8KdRxmvWOdzU0lJ_m4KDu0xIl7GE5",
-  authDomain:"controle-de-horas-4e75c.firebaseapp.com",
-  projectId:"controle-de-horas-4e75c",
-  storageBucket:"controle-de-horas-4e75c.firebasestorage.app",
-  messagingSenderId:"39317885480",
-  appId:"1:39317885480:web:23552a4d4ee53d31611b1d"
+  apiKey:"AIzaSyBW42plwejaa_MGMBo2FGAeeQpnNlnmgzM",
+  authDomain:"controle-de-horas-91070.firebaseapp.com",
+  projectId:"controle-de-horas-91070",
+  storageBucket:"controle-de-horas-91070.firebasestorage.app",
+  messagingSenderId:"754749579013",
+  appId:"1:754749579013:web:bc9af2074cbaaf4058616c"
 };
 const IS_DEMO = firebaseConfig.apiKey === "SUA_API_KEY";
 let app, auth, db;
@@ -766,7 +786,7 @@ function rebuildChartFromPage(){
 function destroyChart(){ if(chartInstance){chartInstance.destroy();chartInstance=null;} }
 
 // ── DEMO DATA ─────────────────────────────────
-let demoUsers = [{uid:'admin',email:'admin@sysfolgas.com',name:'Administrador',role:'admin'}];
+let demoUsers = [{uid:'admin',email:'admoperacional@brasildigital.net.br',name:'Administrador',role:'admin'}];
 let demoRecords = [
   {id:'r1', nome:'Ana Lima',       funcao:'Analista RH',      inicio:'2024-03-01',fim:'2024-03-03',motivo:'Folga',         tipo:'integral', obs:'',                  criadoEm:new Date('2024-03-01')},
   {id:'r2', nome:'Carlos Souza',   funcao:'Desenvolvedor',    inicio:'2024-03-04',fim:'2024-03-06',motivo:'Banco de Horas',tipo:'integral', obs:'Sprint Q1',          criadoEm:new Date('2024-03-04')},
@@ -787,9 +807,13 @@ function init(){
     document.body.style.paddingTop='40px';
     showAuthScreen(); return;
   }
-  app=firebase.initializeApp(firebaseConfig);
-  auth=firebase.auth(); db=firebase.firestore();
-  auth.onAuthStateChanged(u=>u?loginSuccess(u):showAuthScreen());
+  loadFirebase(()=>{
+    try{
+      app=firebase.initializeApp(firebaseConfig);
+      auth=firebase.auth(); db=firebase.firestore();
+      auth.onAuthStateChanged(u=>u?loginSuccess(u):showAuthScreen());
+    }catch(e){console.error('Firebase init error:',e);showAuthScreen();}
+  });
 }
 
 // ── AUTH ──────────────────────────────────────
@@ -830,7 +854,7 @@ async function doLogin(){
   msg.className='auth-msg';
   if(!email||!pass){msg.className='auth-msg error';msg.textContent='Preencha e-mail e senha.';return;}
   if(IS_DEMO){
-    if(email==='admin@sysfolgas.com'&&pass==='Admin@2024'){loginSuccessDemo(demoUsers[0]);return;}
+    if(email==='admoperacional@brasildigital.net.br'&&pass==='admin@2026'){loginSuccessDemo(demoUsers[0]);return;}
     const u=demoUsers.find(x=>x.email===email);
     if(u)loginSuccessDemo(u); else{msg.className='auth-msg error';msg.textContent='Credenciais inválidas.';}
     return;
@@ -915,162 +939,168 @@ async function loadRecords(){
   try{const s=await db.collection('lancamentos').orderBy('criadoEm','desc').get();allRecords=s.docs.map(d=>({id:d.id,...d.data()}));}
   catch(e){allRecords=[];}
 }
-function daysBetween(a,b){
-  return Math.max(1,Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/(864e5))+1);
+// ── WORKING SCHEDULE HELPERS ──────────────────
+// Mon–Fri: 08:00–12:00 (4h) + 14:00–18:00 (4h) = 8h/day
+// Saturday: 08:00–12:00 = 4h/day | Sunday = 0h
+function timeToMinutes(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function workHoursPerDay(dow){if(dow===0)return 0;return dow===6?4:8;} // 0=Sun,6=Sat
+function workingDaysBetween(a,b){
+  const s=new Date(a+'T00:00:00'),e=new Date(b+'T00:00:00');
+  let c=0;
+  for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){if(d.getDay()!==0)c++;}
+  return Math.max(1,c);
 }
+function workingHoursBetween(a,b,tipo='integral',hi='',hf=''){
+  const s=new Date(a+'T00:00:00'),e=new Date(b+'T00:00:00');
+  let mins=0;
+  for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){
+    const dow=d.getDay();
+    if(dow===0) continue;
+    if(tipo==='parcial'&&hi&&hf){
+      const periods=dow===6?[[8*60,12*60]]:[[8*60,12*60],[14*60,18*60]];
+      const as=timeToMinutes(hi),ae=timeToMinutes(hf);
+      for(const[ps,pe]of periods){const os=Math.max(as,ps),oe=Math.min(ae,pe);if(oe>os)mins+=oe-os;}
+    } else {
+      mins+=dow===6?4*60:8*60;
+    }
+  }
+  return mins/60;
+}
+function fmtHours(h){
+  if(h===0)return'0h';
+  const hh=Math.floor(h),mm=Math.round((h-hh)*60);
+  return mm>0?`${hh}h ${mm}min`:`${hh}h`;
+}
+// legacy alias (kept for chart/table uses that count days)
+function daysBetween(a,b){return workingDaysBetween(a,b);}
 function fmtDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
 function motivoBadge(m){
   const mp={'Banco de Horas':'badge-blue','Folga':'badge-teal','Atestado':'badge-red','Declaração':'badge-yellow'};
   return`<span class="badge ${mp[m]||'badge-purple'}">${m}</span>`;
 }
 
-// ── DASHBOARD FILTER STATE ────────────────────
-let dashFilter={de:'',ate:'',colab:''};
+// ── DASHBOARD STATE ──────────────────────────
+let dashFilters={de:'',ate:'',colab:'',motivo:''};
+
+function getDashFiltered(){
+  let f=allRecords;
+  if(dashFilters.de)    f=f.filter(r=>r.inicio>=dashFilters.de);
+  if(dashFilters.ate)   f=f.filter(r=>r.fim<=dashFilters.ate);
+  if(dashFilters.colab) f=f.filter(r=>r.nome.toLowerCase().includes(dashFilters.colab.toLowerCase()));
+  if(dashFilters.motivo)f=f.filter(r=>r.motivo===dashFilters.motivo);
+  return f;
+}
+
+function applyDashboardFilters(){
+  dashFilters.de    =document.getElementById('df-de')?.value||'';
+  dashFilters.ate   =document.getElementById('df-ate')?.value||'';
+  dashFilters.colab =document.getElementById('df-colab')?.value.trim()||'';
+  dashFilters.motivo=document.getElementById('df-mot')?.value||'';
+  renderDashboardContent();
+}
+
+function clearDashboardFilters(){
+  dashFilters={de:'',ate:'',colab:'',motivo:''};
+  const ids=['df-de','df-ate','df-colab','df-mot'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderDashboardContent();
+}
+
+function renderDashboardContent(){
+  const recs=getDashFiltered();
+  const bm={};recs.forEach(r=>{bm[r.motivo]=(bm[r.motivo]||0)+1;});
+  const totalHoras=recs.reduce((s,r)=>s+workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||''),0);
+  const mes=new Date().getMonth(),ano=new Date().getFullYear();
+  const doMes=recs.filter(r=>{const d=new Date(r.inicio+'T00:00:00');return d.getMonth()===mes&&d.getFullYear()===ano;}).length;
+  const uniqColab=new Set(recs.map(r=>r.nome)).size;
+
+  // Active filter tags
+  const tags=[];
+  if(dashFilters.de||dashFilters.ate){
+    let t=dashFilters.de&&dashFilters.ate?`${fmtDate(dashFilters.de)} → ${fmtDate(dashFilters.ate)}`:dashFilters.de?`A partir de ${fmtDate(dashFilters.de)}`:`Até ${fmtDate(dashFilters.ate)}`;
+    tags.push(t);
+  }
+  if(dashFilters.colab) tags.push(`👤 ${dashFilters.colab}`);
+  if(dashFilters.motivo) tags.push(`🏷️ ${dashFilters.motivo}`);
+  const stripHTML=tags.length?`<div class="dash-filter-strip">${tags.map(t=>`<span class="dash-filter-active-tag">${t}</span>`).join('')}</div>`:`<div class="dash-filter-strip"></div>`;
+
+  // Distribuição por motivo — in HOURS
+  const horasMot={'Banco de Horas':0,'Folga':0,'Atestado':0,'Declaração':0};
+  recs.forEach(r=>{
+    const m=Object.keys(horasMot).includes(r.motivo)?r.motivo:null;
+    if(m) horasMot[m]+=workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||'');
+  });
+  const totalHorasMot=Object.values(horasMot).reduce((a,b)=>a+b,0)||1;
+  const colors=['var(--accent)','var(--accent2)','var(--danger)','var(--accent3)'];
+  const motivoRows=Object.keys(horasMot).map((m,i)=>{
+    const h=horasMot[m];const pct=Math.round(h/totalHorasMot*100);
+    return`<div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13.5px;font-weight:500;color:var(--text)">${m}</span>
+        <span style="font-size:13px;color:var(--text2)">${fmtHours(h)} <span style="color:var(--text3);font-size:11.5px">(${pct}%)</span></span>
+      </div>
+      <div style="height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border)">
+        <div style="height:100%;width:${pct}%;background:${colors[i]};border-radius:4px;transition:width .6s ease"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const dashBody=document.getElementById('dash-body');
+  if(!dashBody) return;
+  dashBody.innerHTML=`
+    ${stripHTML}
+    <div class="stats-row">
+      <div class="stat-card"><span class="stat-icon">📁</span><div class="stat-label">Total de Registros</div><div class="stat-value">${recs.length}</div><div class="stat-sub">${tags.length?'filtrado':'todos os períodos'}</div></div>
+      <div class="stat-card"><span class="stat-icon">📅</span><div class="stat-label">No Mês Atual</div><div class="stat-value">${doMes}</div><div class="stat-sub">${new Date().toLocaleString('pt-BR',{month:'long',year:'numeric'})}</div></div>
+      <div class="stat-card"><span class="stat-icon">⏱️</span><div class="stat-label">Banco de Horas</div><div class="stat-value">${bm['Banco de Horas']||0}</div><div class="stat-sub">lançamentos</div></div>
+      <div class="stat-card"><span class="stat-icon">🩺</span><div class="stat-label">Atestados</div><div class="stat-value">${bm['Atestado']||0}</div><div class="stat-sub">lançamentos</div></div>
+      <div class="stat-card"><span class="stat-icon">☀️</span><div class="stat-label">Folgas</div><div class="stat-value">${bm['Folga']||0}</div><div class="stat-sub">lançamentos</div></div>
+      <div class="stat-card"><span class="stat-icon">🕐</span><div class="stat-label">Total de Horas</div><div class="stat-value" style="font-size:26px">${fmtHours(totalHoras)}</div><div class="stat-sub">${uniqColab} colaborador${uniqColab!==1?'es':''}</div></div>
+    </div>
+    <div class="dash-bottom">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Lançamentos Recentes</div>
+          <button class="btn-secondary" style="font-size:13px;padding:8px 16px" onclick="showPage('lancamentos')">Ver todos →</button>
+        </div>
+        <div class="table-wrap">${tableHTML(recs.slice(0,8))}</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title card-title-sm">Distribuição por Motivo</div><span style="font-size:11.5px;color:var(--text3)">em horas úteis</span></div>
+        <div class="card-body" style="padding:20px 22px">${motivoRows}</div>
+      </div>
+    </div>`;
+}
 
 // ── DASHBOARD ─────────────────────────────────
 async function renderDashboard(){
   document.getElementById('content').innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
   await loadRecords();
-  // populate collaborator names for select
-  const names=[...new Set(allRecords.map(r=>r.nome))].sort();
+  // Sync filter state to inputs if filters were set before
+  const colabOptions=[...new Set(allRecords.map(r=>r.nome))].sort();
   document.getElementById('content').innerHTML=`
-    <!-- FILTER BAR -->
-    <div class="dash-filter-bar">
-      <div class="filter-group">
-        <span class="filter-label">De</span>
-        <input type="date" id="df-de" value="${dashFilter.de}" oninput="applyDashFilters()"/>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">Até</span>
-        <input type="date" id="df-ate" value="${dashFilter.ate}" oninput="applyDashFilters()"/>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">Colaborador</span>
-        <select id="df-colab" onchange="applyDashFilters()">
+    <div class="dash-filters">
+      <div class="dash-filter-group"><span class="dash-filter-label">De</span><input type="date" id="df-de" value="${dashFilters.de}" onchange="applyDashboardFilters()"/></div>
+      <div class="dash-filter-group"><span class="dash-filter-label">Até</span><input type="date" id="df-ate" value="${dashFilters.ate}" onchange="applyDashboardFilters()"/></div>
+      <div class="dash-filter-group grow"><span class="dash-filter-label">Colaborador</span>
+        <select id="df-colab" onchange="applyDashboardFilters()">
           <option value="">Todos os colaboradores</option>
-          ${names.map(n=>`<option value="${n}" ${dashFilter.colab===n?'selected':''}>${n}</option>`).join('')}
+          ${colabOptions.map(n=>`<option value="${n}" ${dashFilters.colab===n?'selected':''}>${n}</option>`).join('')}
         </select>
       </div>
-      <button class="btn-clear-dash" id="dash-clear-btn" onclick="clearDashFilters()" style="display:${dashFilter.de||dashFilter.ate||dashFilter.colab?'flex':'none'}">
-        ✕ Limpar filtros
-      </button>
+      <div class="dash-filter-group"><span class="dash-filter-label">Motivo</span>
+        <select id="df-mot" onchange="applyDashboardFilters()">
+          <option value="">Todos os motivos</option>
+          <option ${dashFilters.motivo==='Banco de Horas'?'selected':''}>Banco de Horas</option>
+          <option ${dashFilters.motivo==='Folga'?'selected':''}>Folga</option>
+          <option ${dashFilters.motivo==='Atestado'?'selected':''}>Atestado</option>
+          <option ${dashFilters.motivo==='Declaração'?'selected':''}>Declaração</option>
+        </select>
+      </div>
+      <button class="btn-dash-clear" onclick="clearDashboardFilters()" title="Limpar filtros">✕ Limpar</button>
     </div>
-    <!-- CONTEXT BANNER (shown when colab selected) -->
-    <div id="dash-context-banner" style="display:none"></div>
-    <!-- STATS -->
-    <div class="stats-row" id="dash-stats-row"></div>
-    <!-- BOTTOM -->
-    <div class="dash-bottom">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title" id="dash-table-title">Lançamentos Recentes</div>
-          <button class="btn-secondary" style="font-size:13px;padding:8px 16px" onclick="showPage('lancamentos')">Ver todos →</button>
-        </div>
-        <div class="table-wrap" id="dash-table-wrap"></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title card-title-sm">Distribuição por Motivo</div></div>
-        <div class="card-body" style="padding:20px 22px" id="dash-dist"></div>
-      </div>
-    </div>`;
-  applyDashFilters();
-}
-
-function getDashFiltered(){
-  const de=document.getElementById('df-de')?.value||'';
-  const ate=document.getElementById('df-ate')?.value||'';
-  const colab=document.getElementById('df-colab')?.value||'';
-  dashFilter={de,ate,colab};
-  let f=[...allRecords];
-  if(de)    f=f.filter(r=>r.inicio>=de);
-  if(ate)   f=f.filter(r=>r.fim<=ate);
-  if(colab) f=f.filter(r=>r.nome===colab);
-  return f;
-}
-
-function applyDashFilters(){
-  const f=getDashFiltered();
-  const {de,ate,colab}=dashFilter;
-  const hasFilter=de||ate||colab;
-
-  // show/hide clear btn
-  const clearBtn=document.getElementById('dash-clear-btn');
-  if(clearBtn) clearBtn.style.display=hasFilter?'flex':'none';
-
-  // context banner
-  const banner=document.getElementById('dash-context-banner');
-  if(banner){
-    if(colab){
-      const totalDias=f.reduce((s,r)=>s+daysBetween(r.inicio,r.fim),0);
-      const periodoStr=de&&ate?`${fmtDate(de)} → ${fmtDate(ate)}`:de?`A partir de ${fmtDate(de)}`:ate?`Até ${fmtDate(ate)}`:'Todos os períodos';
-      banner.style.display='flex';
-      banner.innerHTML=`
-        <div class="dash-context-avatar">${colab[0].toUpperCase()}</div>
-        <div class="dash-context-info">
-          <h3>${colab}</h3>
-          <p>${f.length} registro${f.length!==1?'s':''} · ${periodoStr}</p>
-        </div>
-        <div class="dash-context-chips">
-          <span class="dash-chip">${f.length} lançamento${f.length!==1?'s':''}</span>
-          <span class="dash-chip chip-green">${totalDias} dia${totalDias!==1?'s':''}</span>
-          ${de||ate?`<span class="dash-chip chip-yellow">📅 Filtro de período ativo</span>`:''}
-        </div>`;
-    } else {
-      banner.style.display='none';
-    }
-  }
-
-  // stats
-  const bm={};f.forEach(r=>{bm[r.motivo]=(bm[r.motivo]||0)+1;});
-  const totalDias=f.reduce((s,r)=>s+daysBetween(r.inicio,r.fim),0);
-  const mes=new Date().getMonth(),ano=new Date().getFullYear();
-  const doMes=f.filter(r=>{const d=new Date(r.inicio+'T00:00:00');return d.getMonth()===mes&&d.getFullYear()===ano;}).length;
-  const uniqColab=new Set(f.map(r=>r.nome)).size;
-  const sr=document.getElementById('dash-stats-row');
-  if(sr) sr.innerHTML=`
-    <div class="stat-card"><span class="stat-icon">📁</span><div class="stat-label">${hasFilter?'Registros Filtrados':'Total de Registros'}</div><div class="stat-value">${f.length}</div><div class="stat-sub">${hasFilter?'no filtro atual':'todos os períodos'}</div></div>
-    <div class="stat-card"><span class="stat-icon">📅</span><div class="stat-label">No Mês Atual</div><div class="stat-value">${doMes}</div><div class="stat-sub">${new Date().toLocaleString('pt-BR',{month:'long',year:'numeric'})}</div></div>
-    <div class="stat-card"><span class="stat-icon">⏱️</span><div class="stat-label">Banco de Horas</div><div class="stat-value">${bm['Banco de Horas']||0}</div><div class="stat-sub">lançamentos</div></div>
-    <div class="stat-card"><span class="stat-icon">🩺</span><div class="stat-label">Atestados</div><div class="stat-value">${bm['Atestado']||0}</div><div class="stat-sub">lançamentos</div></div>
-    <div class="stat-card"><span class="stat-icon">☀️</span><div class="stat-label">Folgas</div><div class="stat-value">${bm['Folga']||0}</div><div class="stat-sub">lançamentos</div></div>
-    <div class="stat-card"><span class="stat-icon">📆</span><div class="stat-label">Total de Dias</div><div class="stat-value">${totalDias}</div><div class="stat-sub">${colab?colab:uniqColab+' colaborador'+(uniqColab!==1?'es':'')}</div></div>`;
-
-  // table
-  const tw=document.getElementById('dash-table-wrap');
-  const tt=document.getElementById('dash-table-title');
-  if(tt) tt.textContent=hasFilter?`Lançamentos Filtrados (${f.length})`:`Lançamentos Recentes`;
-  if(tw) tw.innerHTML=tableHTML(hasFilter?f:f.slice(0,8));
-
-  // distribution
-  const dist=document.getElementById('dash-dist');
-  if(dist){
-    const tot=f.length||1;
-    dist.innerHTML=['Banco de Horas','Folga','Atestado','Declaração'].map((m,i)=>{
-      const cnt=bm[m]||0;
-      const pct=Math.round(cnt/tot*100);
-      const colors=['var(--accent)','var(--accent2)','var(--danger)','var(--accent3)'];
-      return`<div style="margin-bottom:16px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-          <span style="font-size:13.5px;font-weight:500;color:var(--text)">${m}</span>
-          <span style="font-size:13px;color:var(--text2)">${cnt} <span style="color:var(--text3);font-size:11.5px">(${pct}%)</span></span>
-        </div>
-        <div style="height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border)">
-          <div style="height:100%;width:${pct}%;background:${colors[i]};border-radius:4px;transition:width .6s ease"></div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-}
-
-function clearDashFilters(){
-  dashFilter={de:'',ate:'',colab:''};
-  const de=document.getElementById('df-de');
-  const ate=document.getElementById('df-ate');
-  const colab=document.getElementById('df-colab');
-  if(de) de.value='';
-  if(ate) ate.value='';
-  if(colab) colab.value='';
-  applyDashFilters();
+    <div id="dash-body"></div>`;
+  renderDashboardContent();
 }
 
 // ── LANÇAMENTOS ───────────────────────────────
@@ -1094,12 +1124,16 @@ function tipoBadge(r){
 
 function tableHTML(records, withActions=false){
   if(!records.length)return`<div class="empty"><div class="empty-icon">📭</div><p>Nenhum registro encontrado</p></div>`;
-  const rows=records.map(r=>`<tr>
+  const rows=records.map(r=>{
+    const wd=workingDaysBetween(r.inicio,r.fim);
+    const hrs=workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||'');
+    return`<tr>
     <td class="td-name">${r.nome}</td>
     <td class="td-muted">${r.funcao}</td>
     <td>${fmtDate(r.inicio)}</td>
     <td>${fmtDate(r.fim)}</td>
-    <td style="text-align:center;font-weight:700;font-family:'Syne',sans-serif;font-size:15px">${daysBetween(r.inicio,r.fim)}</td>
+    <td style="text-align:center;font-weight:700;font-family:'Syne',sans-serif;font-size:15px">${wd}</td>
+    <td style="text-align:center;font-size:13px;color:var(--text2)">${fmtHours(hrs)}</td>
     <td>${tipoBadge(r)}</td>
     <td>${motivoBadge(r.motivo)}</td>
     <td class="td-muted">${r.obs||'—'}</td>
@@ -1107,10 +1141,10 @@ function tableHTML(records, withActions=false){
       <button class="btn-xs btn-edit" onclick="editLancamento('${r.id}')">✏️ Editar</button>
       <button class="btn-xs btn-del"  onclick="deleteLancamento('${r.id}')">🗑️</button>
     </div></td>`:''}
-  </tr>`).join('');
+  </tr>`;}).join('');
   return`<table><thead><tr>
     <th>Colaborador</th><th>Função</th><th>Início</th><th>Fim</th>
-    <th style="text-align:center">Dias</th><th>Tipo</th><th>Motivo</th><th>Observação</th>
+    <th style="text-align:center">D. Úteis</th><th style="text-align:center">Horas</th><th>Tipo</th><th>Motivo</th><th>Observação</th>
     ${withActions?'<th>Ações</th>':''}
   </tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -1127,6 +1161,7 @@ function openModal(id=null){
       document.getElementById('f-funcao').value=r.funcao;
       document.getElementById('f-inicio').value=r.inicio;
       document.getElementById('f-fim').value=r.fim;
+      updateWorkingDaysInfo();
       const std=['Banco de Horas','Folga','Atestado','Declaração'];
       if(std.includes(r.motivo)){document.getElementById('f-motivo').value=r.motivo;document.getElementById('f-motivo-custom-wrap').style.display='none';}
       else{document.getElementById('f-motivo').value='__outro__';document.getElementById('f-motivo-custom-wrap').style.display='block';document.getElementById('f-motivo-custom').value=r.motivo;}
@@ -1144,6 +1179,7 @@ function openModal(id=null){
     ['f-nome','f-funcao','f-inicio','f-fim','f-obs','f-motivo-custom'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('f-motivo').value='';
     document.getElementById('f-motivo-custom-wrap').style.display='none';
+    const infoEl=document.getElementById('working-days-info');if(infoEl)infoEl.style.display='none';
     setTipo('integral');
   }
   document.getElementById('modal-lancamento').classList.add('open');
@@ -1194,6 +1230,18 @@ function calcDuration(){
   tag.style.borderColor='rgba(79,142,247,.2)';
   tag.style.color='var(--accent)';
   tag.textContent=`⏱️ Duração: ${h>0?h+'h ':''}${m>0?m+'min':''}`;
+}
+
+function updateWorkingDaysInfo(){
+  const ini=document.getElementById('f-inicio').value;
+  const fim=document.getElementById('f-fim').value;
+  const infoEl=document.getElementById('working-days-info');
+  if(!infoEl) return;
+  if(!ini||!fim||ini>fim){infoEl.style.display='none';return;}
+  const wd=workingDaysBetween(ini,fim);
+  const hrs=workingHoursBetween(ini,fim,'integral','','');
+  infoEl.style.display='block';
+  infoEl.textContent=`📅 ${wd} dia${wd!==1?'s':''} útil${wd!==1?'eis':''} · ⏱️ ${fmtHours(hrs)} (jornada integral)`;
 }
 
 async function saveLancamento(){
@@ -1368,10 +1416,10 @@ const PAL_LIGHT=[
 function buildChart(records){
   const colabMap={};
   records.forEach(r=>{
-    const dias=daysBetween(r.inicio,r.fim);
+    const hrs=workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||'');
     const mot=MOTIVOS_STD.includes(r.motivo)?r.motivo:'Outros';
     if(!colabMap[r.nome]) colabMap[r.nome]={};
-    colabMap[r.nome][mot]=(colabMap[r.nome][mot]||0)+dias;
+    colabMap[r.nome][mot]=(colabMap[r.nome][mot]||0)+hrs;
   });
   const labels=Object.keys(colabMap);
   const canvas=document.getElementById('horasChart');
@@ -1428,10 +1476,10 @@ function buildChart(records){
           borderWidth:1,padding:12,
           callbacks:{
             title:i=>`👤 ${i[0].label}`,
-            label:c=>c.raw>0?`  ${c.dataset.label}: ${c.raw} dia${c.raw!==1?'s':''}`:null,
+            label:c=>c.raw>0?`  ${c.dataset.label}: ${fmtHours(c.raw)}`:null,
             afterBody:i=>{
               const tot=datasets.reduce((s,d)=>s+d.data[i[0].dataIndex],0);
-              return tot>0?['  ─────────────',`  Total: ${tot} dia${tot!==1?'s':''}`]:[];
+              return tot>0?['  ─────────────',`  Total: ${fmtHours(tot)}`]:[];
             }
           }
         }
@@ -1440,8 +1488,8 @@ function buildChart(records){
         x:{
           stacked:true,beginAtZero:true,
           grid:{color:gridColor},
-          ticks:{color:tickColor,font:{family:'DM Sans',size:12.5},stepSize:1},
-          title:{display:true,text:'Quantidade de dias',color:tickColor,font:{family:'DM Sans',size:12.5}},
+          ticks:{color:tickColor,font:{family:'DM Sans',size:12.5},callback:v=>v+'h'},
+          title:{display:true,text:'Horas úteis',color:tickColor,font:{family:'DM Sans',size:12.5}},
         },
         y:{
           stacked:true,grid:{display:false},
@@ -1468,12 +1516,12 @@ function renderMotivoSummary(records){
   const pal=isDark?PAL_DARK:PAL_LIGHT;
   const bm={};records.forEach(r=>{
     const m=MOTIVOS_STD.includes(r.motivo)?r.motivo:'Outros';
-    bm[m]=(bm[m]||0)+daysBetween(r.inicio,r.fim);
+    bm[m]=(bm[m]||0)+workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||'');
   });
   el.innerHTML=MOTIVOS_STD.filter(m=>bm[m]).map((m,i)=>`
     <div class="motivo-row">
       <div class="motivo-row-left"><span class="motivo-dot" style="background:${pal[MOTIVOS_STD.indexOf(m)].brd}"></span><span style="font-size:13px;color:var(--text)">${m}</span></div>
-      <div class="motivo-row-val">${bm[m]} dia${bm[m]!==1?'s':''}</div>
+      <div class="motivo-row-val">${fmtHours(bm[m])}</div>
     </div>`).join('');
 }
 
@@ -1482,10 +1530,12 @@ function exportExcel(){
   const data=getFilteredRecords().map(r=>{
     const tipo=r.tipo||'integral';
     const horario=tipo==='parcial'&&r.horaInicio&&r.horaFim?`${r.horaInicio} – ${r.horaFim}`:'—';
+    const wd=workingDaysBetween(r.inicio,r.fim);
+    const hrs=workingHoursBetween(r.inicio,r.fim,tipo,r.horaInicio||'',r.horaFim||'');
     return{
       'Nome':r.nome,'Função':r.funcao,
       'Data Início':fmtDate(r.inicio),'Data Fim':fmtDate(r.fim),
-      'Dias':daysBetween(r.inicio,r.fim),
+      'Dias Úteis':wd,'Horas Úteis':fmtHours(hrs),
       'Tipo':tipo==='parcial'?'Parcial':'Integral',
       'Horário (Parcial)':horario,
       'Motivo':r.motivo,'Observação':r.obs||''
@@ -1533,19 +1583,18 @@ async function toggleRole(uid,currentRole){
 
 // also restore content style when switching away from relatorio
 
-
 // ── TOAST ──────────────────────────────────────
 function toast(msg,type='success'){
   const c=document.getElementById('toast-container');
+  if(!c) return;
   const t=document.createElement('div');
   t.className=`toast toast-${type}`;
-  t.innerHTML=msg;
+  t.textContent=msg;
   c.appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(()=>t.remove(),400);},3200);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(30px)';t.style.transition='all .3s';setTimeout(()=>t.remove(),300);},3000);
 }
 
-// ── INIT ───────────────────────────────────────
-window.addEventListener('DOMContentLoaded',()=>init());
+init();
 </script>
 </body>
 </html>
