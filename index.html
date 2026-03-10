@@ -541,6 +541,103 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
   .topbar{padding:0 18px}
 }
 
+/* ════════════════════════════════════════════
+   COLABORADORES — dropdown autocomplete
+════════════════════════════════════════════ */
+.colab-dropdown{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:500;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,.28);overflow:hidden;max-height:220px;overflow-y:auto;
+}
+.colab-option{
+  padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);transition:background .14s;
+}
+.colab-option:last-child{border-bottom:none}
+.colab-option:hover,.colab-option.focused{background:var(--surface2)}
+.colab-option-name{font-size:14px;font-weight:600;color:var(--text)}
+.colab-option-func{font-size:12px;color:var(--text3);margin-top:1px}
+.colab-option-avatar{
+  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#fff;
+}
+.colab-no-result{padding:14px;text-align:center;color:var(--text3);font-size:13px}
+
+/* ── COLABORADORES PAGE ── */
+.colab-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;margin-top:4px;
+}
+.colab-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px 22px;display:flex;align-items:center;gap:14px;
+  transition:border-color .18s,transform .15s;
+}
+.colab-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.colab-card-avatar{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;color:#fff;
+}
+.colab-card-info{flex:1;min-width:0}
+.colab-card-name{font-size:14.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.colab-card-func{font-size:12.5px;color:var(--text3);margin-top:3px}
+.colab-card-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* ════════════════════════════════════════════
+   COLABORADORES AUTOCOMPLETE DROPDOWN
+════════════════════════════════════════════ */
+.colab-dropdown{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:500;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,.28);max-height:220px;overflow-y:auto;
+}
+.colab-option{
+  display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;
+  transition:background .15s;
+}
+.colab-option:hover,.colab-option.focused{background:var(--surface2)}
+.colab-option-avatar{
+  width:32px;height:32px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#fff;
+}
+.colab-option-info{flex:1;min-width:0}
+.colab-option-name{font-size:14px;font-weight:600;color:var(--text)}
+.colab-option-func{font-size:12px;color:var(--text3);margin-top:1px}
+.colab-option-empty{padding:16px;text-align:center;color:var(--text3);font-size:13px}
+
+/* ════════════════════════════════════════════
+   COLABORADORES PAGE
+════════════════════════════════════════════ */
+.colab-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:16px;padding:4px 0;
+}
+.colab-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;display:flex;flex-direction:column;gap:12px;
+  transition:border-color .18s,transform .18s;
+}
+.colab-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.colab-card-top{display:flex;align-items:center;gap:13px}
+.colab-avatar{
+  width:44px;height:44px;border-radius:11px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;color:#fff;
+}
+.colab-name{font-size:15px;font-weight:700;color:var(--text)}
+.colab-func{font-size:12.5px;color:var(--text2);margin-top:2px}
+.colab-card-actions{display:flex;gap:8px;padding-top:4px;border-top:1px solid var(--border)}
+
+/* Modal Colaborador */
+#modal-colaborador .modal{max-width:480px}
+
 /* table header in rel panel */
 .panel-thead{
   padding:12px 18px;background:var(--surface2);border-bottom:1px solid var(--border);
@@ -602,6 +699,7 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
         <button class="nav-item"        id="nav-relatorio"   onclick="showPage('relatorio')"><span class="icon">📋</span>Relatório</button>
         <div class="nav-divider"></div>
         <div class="sidebar-section-label">Configurações</div>
+        <button class="nav-item"        id="nav-colaboradores" onclick="showPage('colaboradores')"><span class="icon">🧑‍💼</span>Colaboradores</button>
         <button class="nav-item"        id="nav-usuarios"    onclick="showPage('usuarios')"><span class="icon">👥</span>Usuários</button>
       </nav>
       <div style="padding:0 14px 10px">
@@ -649,9 +747,17 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-row">
-        <div class="form-field"><label>Nome do Colaborador *</label><input type="text" id="f-nome" placeholder="Nome completo"/></div>
-        <div class="form-field"><label>Função / Cargo *</label><input type="text" id="f-funcao" placeholder="Ex: Analista"/></div>
+      <div class="form-field">
+        <label>Colaborador *</label>
+        <div style="position:relative">
+          <input type="text" id="f-nome" placeholder="Digite o nome ou selecione…" autocomplete="off"
+            oninput="filterColabSuggestions()" onfocus="filterColabSuggestions()" onblur="setTimeout(hideColabSuggestions,180)"/>
+          <div id="colab-suggestions" class="colab-dropdown" style="display:none"></div>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Função / Cargo *</label>
+        <input type="text" id="f-funcao" placeholder="Preenchido automaticamente ou manual"/>
       </div>
       <div class="form-row">
         <div class="form-field"><label>Data Início *</label><input type="date" id="f-inicio" oninput="updateWorkingDaysInfo()"/></div>
@@ -717,7 +823,50 @@ tbody tr:hover td{background:rgba(128,128,128,.035)}
   </div>
 </div>
 
+<!-- MODAL COLABORADOR -->
+<div class="modal-overlay" id="modal-colaborador">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-colab-title">Novo Colaborador</div>
+      <button class="modal-close" onclick="closeColabModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field"><label>Nome Completo *</label><input type="text" id="fc-nome" placeholder="Ex: João da Silva"/></div>
+      <div class="form-field"><label>Função / Cargo *</label><input type="text" id="fc-funcao" placeholder="Ex: Analista, Técnico, Gerente…"/></div>
+      <div class="form-field">
+        <label>Setor / Departamento</label>
+        <input type="text" id="fc-setor" placeholder="Ex: TI, Financeiro, RH… (opcional)"/>
+      </div>
+      <div id="modal-colab-msg" class="auth-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeColabModal()">Cancelar</button>
+      <button class="btn-primary" style="padding:12px 36px;margin-top:0" onclick="saveColaborador()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- CHANGE PASSWORD -->
+<!-- MODAL COLABORADOR -->
+<div class="modal-overlay" id="modal-colaborador">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-colab-title">Novo Colaborador</div>
+      <button class="modal-close" onclick="closeColabModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field"><label>Nome Completo *</label><input type="text" id="fc-nome" placeholder="Ex: João da Silva"/></div>
+      <div class="form-field"><label>Função / Cargo *</label><input type="text" id="fc-funcao" placeholder="Ex: Analista de RH"/></div>
+      <div class="form-field"><label>Departamento</label><input type="text" id="fc-depto" placeholder="Ex: Tecnologia (opcional)"/></div>
+      <div id="modal-colab-msg" class="auth-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeColabModal()">Cancelar</button>
+      <button class="btn-primary" style="padding:12px 36px;margin-top:0" onclick="saveColaborador()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div id="change-pass-panel">
   <div class="panel-overlay">
     <div class="panel">
@@ -750,6 +899,54 @@ const firebaseConfig = {
 const IS_DEMO = firebaseConfig.apiKey === "SUA_API_KEY";
 let app, auth, db;
 let currentUser=null, editingId=null, allRecords=[], chartInstance=null;
+let allColaboradores=[], editingColabId=null;
+
+// Demo colaboradores
+const demoColaboradores=[
+  {id:'c1', nome:'ADRIELYTON MANOEL DA COSTA',              funcao:'LINHEIRO JUNIOR',                               depto:''},
+  {id:'c2', nome:'AIRTON FREIRE DA SILVA',                  funcao:'LINHEIRO JUNIOR',                               depto:''},
+  {id:'c3', nome:'Alan Dumay de Freitas',                   funcao:'AJUDANTE DE EMENDADOR DE FIBRA',                depto:''},
+  {id:'c4', nome:'ALAN HENRIQUE TAVARES GONCALVES',         funcao:'ASSITENTE TECNICO EMENDADOR JUNIOR',            depto:''},
+  {id:'c5', nome:'ALBERTINO FERREIRA COSTA',                funcao:'ENCARREGADO DE REDES',                          depto:''},
+  {id:'c6', nome:'ALECSANDRO PANTOJA FLORENTINO',           funcao:'EMENDADOR DE FIBRAS PLANO',                     depto:''},
+  {id:'c7', nome:'ALEX ALVES FREITAS COSTA',                funcao:'AUX. PROJETISTA CADISTA',                       depto:''},
+  {id:'c8', nome:'ANDERSON APARECIDO DE SOUZA',             funcao:'ENCARREGADO DE REDES',                          depto:''},
+  {id:'c9', nome:'ANDERSON FREITAS NOE',                    funcao:'AUX. PROJETISTA CADISTA',                       depto:''},
+  {id:'c10',nome:'ANDRE FERREIRA MENEZES',                  funcao:'LINHEIRO JUNIOR',                               depto:''},
+  {id:'c11',nome:'ANTONIO CARLOS PEREIRA DA COSTA',         funcao:'EMENDADOR DE FIBRAS',                           depto:''},
+  {id:'c12',nome:'ARTHUR MARTINS QUEIROZ',                  funcao:'TECNICO MULTISKLL JUNIOR',                      depto:''},
+  {id:'c13',nome:'BRENNO LUIS PEREIRA BARROS',              funcao:'AJUDANTE EMENDADOR DE FIBRA JUNIOR',            depto:''},
+  {id:'c14',nome:'DANIELA CRISTINA CHEFRE DA SILVA',        funcao:'SUPERVISOR DE PROJETOS',                        depto:''},
+  {id:'c15',nome:'DIEGO SANTOS MATIAS',                     funcao:'DIRETOR GERAL DE EMPRESA',                      depto:''},
+  {id:'c16',nome:'EMERSON SOARES PINTO',                    funcao:'EMENDADOR DE FIBRAS',                           depto:''},
+  {id:'c17',nome:'EVERTON VINICIUS ZAINIDIN DOS SANTOS',    funcao:'AJUDANTE DE EMENDADOR DE FIBRA',                depto:''},
+  {id:'c18',nome:'FABRICIO BELEZA OLIVEIRA',                funcao:'ASSITENTE TECNICO EMENDADOR JUNIOR',            depto:''},
+  {id:'c19',nome:'FLAERTE SILVA DANTAS',                    funcao:'AJUDANTE DE EMENDADOR DE FIBRA',                depto:''},
+  {id:'c20',nome:'FRANCIEL MACHADO CHAVES',                 funcao:'AJUDANTE DE EMENDADOR DE FIBRA',                depto:''},
+  {id:'c21',nome:'FRANCISCO ROCHA DOS SANTOS',              funcao:'LINHEIRO',                                      depto:''},
+  {id:'c22',nome:'GEORGE GOMES CAIRES',                     funcao:'SUPERVISOR DE PROJETOS',                        depto:''},
+  {id:'c23',nome:'HUILIAN WILKENS DE ALMEIDA',              funcao:'LINHEIRO JUNIOR',                               depto:''},
+  {id:'c24',nome:'ITALO GABRIEL PESSOA BARBOSA',            funcao:'EMENDADOR DE FIBRA JUNIOR',                     depto:''},
+  {id:'c25',nome:'IURY LOURRAN FERNANDES CARDOSO',          funcao:'EMENDADOR DE FIBRAS',                           depto:''},
+  {id:'c26',nome:'JHONATAN RENAN FEITOSA FIGUEIRA',         funcao:'TECNICO MULTISKILL TRAINNE',                    depto:''},
+  {id:'c27',nome:'JOAO MAIDSON MENDES MOTA',                funcao:'AJUDANTE DE EMENDADOR DE FIBRA',                depto:''},
+  {id:'c28',nome:'JOSE FRANCISCO DA SILVA MUNIZ',           funcao:'EMENDADOR DE FIBRAS',                           depto:''},
+  {id:'c29',nome:'JOSE RONALDO PEREIRA BARROS',             funcao:'LINHEIRO',                                      depto:''},
+  {id:'c30',nome:'LUAN PANTOJA MARQUES',                    funcao:'SUPORTE TECNICO JUNIOR',                        depto:''},
+  {id:'c31',nome:'LUIS FERNANDES DIOGENES MARTINS',         funcao:'COORDENADOR INFRAESTRUTURA E PROJETOS',         depto:''},
+  {id:'c32',nome:'MANOEL PINTO',                            funcao:'ENCARREGADO DE REDES',                          depto:''},
+  {id:'c33',nome:'MAQUESSOEEL MARQUES DA SILVA',            funcao:'AJUDANTE DE EMENDADOR DE FIBRA',                depto:''},
+  {id:'c34',nome:'MARCELO AUGUSTO SILVA',                   funcao:'EMENDADOR DE FIBRAS',                           depto:''},
+  {id:'c35',nome:'MARCELO LIMA DA SILVA TEIXEIRA',          funcao:'AJUDANTE DE EMENDADOR DE FIBRA',                depto:''},
+  {id:'c36',nome:'MARCOS AGEU BARBOZA DE ARAUJO',           funcao:'LINHEIRO',                                      depto:''},
+  {id:'c37',nome:'MARCOS HENRIQUE BITECOURT DE FREITAS',    funcao:'AJUDANTE DE EMENDADOR DE FIBRA',                depto:''},
+  {id:'c38',nome:'MARLON BRANDON ARAUJO PAZ',               funcao:'ANALISTA ADMINISTRATIVO SENIOR',                depto:''},
+  {id:'c39',nome:'MATHEUS EDUARDO LOPES PEREIRA',           funcao:'ASSISTENTE DE PROJETOS JUNIOR',                 depto:''},
+  {id:'c40',nome:'RAILTON KLEY CHAGAS DA COSTA',            funcao:'TECNICO MULTISKILL TRAINNE',                    depto:''},
+  {id:'c41',nome:'RENAN DINIZ DA SILVA',                    funcao:'LINHEIRO',                                      depto:''},
+  {id:'c42',nome:'RENAN BRUNO DA SILVA IBERNEGARAI',        funcao:'LINHEIRO JUNIOR',                               depto:''},
+  {id:'c43',nome:'RONILSON MATIAS DO NASCIMENTO',           funcao:'AJUDANTE DE EMENDADOR DE FIBRA',                depto:''},
+];
 
 // ── THEME ──────────────────────────────────────
 let currentTheme = localStorage.getItem('sysfolgas-theme')||'dark';
@@ -819,15 +1016,17 @@ async function loginSuccess(user){
   if(db){try{const d=await db.collection('usuarios').doc(user.uid).get();if(d.exists){role=d.data().role||'user';name=d.data().name||name;}}catch(e){}}
   currentUser={uid:user.uid,email:user.email,displayName:name,role};
   setUserUI(name,user.email,role);
+  await loadColaboradores();
   showPage('dashboard');
 }
-function loginSuccessDemo(u){
+async function loginSuccessDemo(u){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   applyTheme(currentTheme,false);
   currentUser={uid:u.uid,email:u.email,displayName:u.name,role:u.role};
   setUserUI(u.name,u.email,u.role);
   allRecords=[...demoRecords];
+  await loadColaboradores();
   showPage('dashboard');
 }
 async function doLogin(){
@@ -889,14 +1088,14 @@ async function doChangePass(){
 
 // ── PAGES ─────────────────────────────────────
 const PAGE_META={
-  dashboard: {title:'Dashboard',sub:'Visão geral dos registros'},
-  lancamentos:{title:'Lançamentos',sub:'Gerencie todas as ausências'},
-  relatorio:  {title:'Relatório',sub:'Análise e exportação dos dados'},
-  usuarios:   {title:'Usuários',sub:'Contas cadastradas no sistema'},
+  dashboard:    {title:'Dashboard',sub:'Visão geral dos registros'},
+  lancamentos:  {title:'Lançamentos',sub:'Gerencie todas as ausências'},
+  relatorio:    {title:'Relatório',sub:'Análise e exportação dos dados'},
+  colaboradores:{title:'Colaboradores',sub:'Cadastro de colaboradores e funções'},
+  usuarios:     {title:'Usuários',sub:'Contas cadastradas no sistema'},
 };
 function showPage(page){
   destroyChart();
-  // Reset content styles changed by relatorio
   if(page!=='relatorio'){
     const c=document.getElementById('content');
     if(c){c.style.padding='36px 40px';c.style.display='block';c.style.overflow='auto';}
@@ -911,9 +1110,13 @@ function showPage(page){
   if(page==='lancamentos'){
     ta.innerHTML=`<button class="btn-primary" style="padding:10px 24px;font-size:14px;margin-top:0" onclick="openModal()">+ Novo Lançamento</button>${themeBtn}`;
     renderLancamentos();
-  } else if(page==='dashboard'){ ta.innerHTML=themeBtn; renderDashboard(); }
-  else if(page==='relatorio'){   ta.innerHTML=themeBtn; renderRelatorio(); }
-  else if(page==='usuarios'){    ta.innerHTML=themeBtn; renderUsuarios(); }
+  } else if(page==='dashboard'){      ta.innerHTML=themeBtn; renderDashboard(); }
+  else if(page==='relatorio'){        ta.innerHTML=themeBtn; renderRelatorio(); }
+  else if(page==='colaboradores'){
+    ta.innerHTML=`<button class="btn-primary" style="padding:10px 24px;font-size:14px;margin-top:0" onclick="openColabModal()">+ Novo Colaborador</button>${themeBtn}`;
+    renderColaboradores();
+  }
+  else if(page==='usuarios'){         ta.innerHTML=themeBtn; renderUsuarios(); }
 }
 
 // ── RECORDS ───────────────────────────────────
@@ -921,6 +1124,11 @@ async function loadRecords(){
   if(IS_DEMO){allRecords=[...demoRecords];return;}
   try{const s=await db.collection('lancamentos').orderBy('criadoEm','desc').get();allRecords=s.docs.map(d=>({id:d.id,...d.data()}));}
   catch(e){allRecords=[];}
+}
+async function loadColaboradores(){
+  if(IS_DEMO){allColaboradores=[...demoColaboradores];return;}
+  try{const s=await db.collection('colaboradores').orderBy('nome').get();allColaboradores=s.docs.map(d=>({id:d.id,...d.data()}));}
+  catch(e){allColaboradores=[];console.error('loadColaboradores:',e);}
 }
 // ── WORKING SCHEDULE HELPERS ──────────────────
 // Mon–Fri: 08:00–12:00 (4h) + 14:00–18:00 (4h) = 8h/day
@@ -1060,7 +1268,7 @@ async function renderDashboard(){
   document.getElementById('content').innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
   await loadRecords();
   // Sync filter state to inputs if filters were set before
-  const colabOptions=[...new Set(allRecords.map(r=>r.nome))].sort();
+  const colabOptions=[...new Set([...allColaboradores.map(c=>c.nome),...allRecords.map(r=>r.nome)])].sort();
   document.getElementById('content').innerHTML=`
     <div class="dash-filters">
       <div class="dash-filter-group"><span class="dash-filter-label">De</span><input type="date" id="df-de" value="${dashFilters.de}" onchange="applyDashboardFilters()"/></div>
@@ -1299,7 +1507,12 @@ async function renderRelatorio(){
     <div class="filters-bar">
       <div class="filter-group"><span class="filter-label">De</span><input type="date" id="f-de"/></div>
       <div class="filter-group"><span class="filter-label">Até</span><input type="date" id="f-ate"/></div>
-      <div class="filter-group"><span class="filter-label">Colaborador</span><input type="text" id="f-colab" placeholder="Buscar por nome…"/></div>
+      <div class="filter-group"><span class="filter-label">Colaborador</span>
+        <select id="f-colab">
+          <option value="">Todos</option>
+          ${[...new Set([...allColaboradores.map(c=>c.nome),...allRecords.map(r=>r.nome)])].sort().map(n=>`<option value="${n}">${n}</option>`).join('')}
+        </select>
+      </div>
       <div class="filter-group">
         <span class="filter-label">Motivo</span>
         <select id="f-mot">
@@ -1358,13 +1571,13 @@ async function renderRelatorio(){
 function getFilteredRecords(){
   const de=document.getElementById('f-de')?.value;
   const ate=document.getElementById('f-ate')?.value;
-  const colab=document.getElementById('f-colab')?.value.trim().toLowerCase();
+  const colab=document.getElementById('f-colab')?.value.trim();
   const mot=document.getElementById('f-mot')?.value;
   const tipoFil=document.getElementById('f-tipo-fil')?.value;
   let f=allRecords;
   if(de)      f=f.filter(r=>r.inicio>=de);
   if(ate)     f=f.filter(r=>r.fim<=ate);
-  if(colab)   f=f.filter(r=>r.nome.toLowerCase().includes(colab));
+  if(colab)   f=f.filter(r=>r.nome===colab);
   if(mot)     f=f.filter(r=>r.motivo===mot);
   if(tipoFil) f=f.filter(r=>(r.tipo||'integral')===tipoFil);
   return f;
@@ -1541,6 +1754,161 @@ function exportExcel(){
   XLSX.utils.book_append_sheet(wb,ws,'Relatório');
   XLSX.writeFile(wb,`relatorio_folgas_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('📥 Excel exportado!','success');
+}
+
+// ── COLABORADORES CRUD ────────────────────────
+async function renderColaboradores(){
+  document.getElementById('content').innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
+  await loadColaboradores();
+  const c=document.getElementById('content');
+  const importBtn=!IS_DEMO?`<button class="btn-secondary" style="font-size:13px;padding:8px 16px;display:flex;align-items:center;gap:7px" onclick="importColaboradoresFirebase()" title="Importar todos os 43 colaboradores do CSV para o Firebase">📤 Importar para Firebase</button>`:'';
+  if(!allColaboradores.length){
+    c.innerHTML=`<div style="margin-bottom:18px;display:flex;justify-content:flex-end">${importBtn}</div><div class="empty"><div class="empty-icon">🧑‍💼</div><p>Nenhum colaborador cadastrado.<br>Clique em <strong>+ Novo Colaborador</strong> para começar.</p></div>`;
+    return;
+  }
+  c.innerHTML=`
+    <div style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <span style="font-size:14px;color:var(--text2)">${allColaboradores.length} colaborador${allColaboradores.length!==1?'es':''} cadastrado${allColaboradores.length!==1?'s':''}</span>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        ${importBtn}
+        <input type="text" id="colab-search" placeholder="🔍 Buscar…" oninput="filterColabCards()"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;width:220px"/>
+      </div>
+    </div>
+    <div class="colab-grid" id="colab-grid">
+      ${renderColabCards(allColaboradores)}
+    </div>`;
+}
+function renderColabCards(list){
+  return list.map(c=>`
+    <div class="colab-card">
+      <div class="colab-card-top">
+        <div class="colab-avatar">${c.nome[0].toUpperCase()}</div>
+        <div>
+          <div class="colab-name">${c.nome}</div>
+          <div class="colab-func">${c.funcao}${c.depto?` · ${c.depto}`:''}</div>
+        </div>
+      </div>
+      <div class="colab-card-actions">
+        <button class="btn-xs btn-edit" style="flex:1" onclick="openColabModal('${c.id}')">✏️ Editar</button>
+        <button class="btn-xs btn-del"  onclick="deleteColaborador('${c.id}')">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+function filterColabCards(){
+  const q=document.getElementById('colab-search')?.value.toLowerCase()||'';
+  const filtered=allColaboradores.filter(c=>c.nome.toLowerCase().includes(q)||c.funcao.toLowerCase().includes(q)||(c.depto||'').toLowerCase().includes(q));
+  const grid=document.getElementById('colab-grid');
+  if(grid) grid.innerHTML=renderColabCards(filtered);
+}
+function openColabModal(id=null){
+  editingColabId=id;
+  document.getElementById('modal-colab-title').textContent=id?'Editar Colaborador':'Novo Colaborador';
+  document.getElementById('modal-colab-msg').className='auth-msg';
+  if(id){
+    const c=allColaboradores.find(x=>x.id===id);
+    if(c){
+      document.getElementById('fc-nome').value=c.nome;
+      document.getElementById('fc-funcao').value=c.funcao;
+      document.getElementById('fc-depto').value=c.depto||'';
+    }
+  } else {
+    ['fc-nome','fc-funcao','fc-depto'].forEach(i=>document.getElementById(i).value='');
+  }
+  document.getElementById('modal-colaborador').classList.add('open');
+  setTimeout(()=>document.getElementById('fc-nome').focus(),80);
+}
+function closeColabModal(){document.getElementById('modal-colaborador').classList.remove('open');}
+async function saveColaborador(){
+  const nome=document.getElementById('fc-nome').value.trim();
+  const funcao=document.getElementById('fc-funcao').value.trim();
+  const depto=document.getElementById('fc-depto').value.trim();
+  const msg=document.getElementById('modal-colab-msg');
+  if(!nome||!funcao){msg.className='auth-msg error';msg.textContent='Nome e Função são obrigatórios.';return;}
+  const data={nome,funcao,depto};
+  if(IS_DEMO){
+    if(editingColabId){const i=demoColaboradores.findIndex(c=>c.id===editingColabId);if(i>=0)demoColaboradores[i]={...demoColaboradores[i],...data};}
+    else demoColaboradores.push({id:'c'+Date.now(),...data});
+    allColaboradores=[...demoColaboradores];
+    closeColabModal();toast('✅ Colaborador salvo!','success');renderColaboradores();return;
+  }
+  try{
+    data.criadoEm=firebase.firestore.FieldValue.serverTimestamp();
+    if(editingColabId) await db.collection('colaboradores').doc(editingColabId).update({nome,funcao,depto});
+    else await db.collection('colaboradores').add(data);
+    await loadColaboradores();
+    closeColabModal();toast('✅ Colaborador salvo!','success');renderColaboradores();
+  }catch(e){console.error(e);msg.className='auth-msg error';msg.textContent=`❌ ${e.message||'Erro ao salvar.'}`;}
+}
+async function deleteColaborador(id){
+  if(!confirm('Excluir este colaborador?'))return;
+  if(IS_DEMO){const i=demoColaboradores.findIndex(c=>c.id===id);if(i>=0)demoColaboradores.splice(i,1);allColaboradores=[...demoColaboradores];toast('🗑️ Excluído.','success');renderColaboradores();return;}
+  try{await db.collection('colaboradores').doc(id).delete();await loadColaboradores();toast('🗑️ Excluído.','success');renderColaboradores();}
+  catch(e){toast('Erro ao excluir.','error');}
+}
+
+async function importColaboradoresFirebase(){
+  if(!confirm(`Importar ${demoColaboradores.length} colaboradores para o Firebase?\n\nColaboradores com o mesmo nome serão ignorados (sem duplicatas).`)) return;
+  const btn=document.querySelector('[onclick="importColaboradoresFirebase()"]');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Importando…';}
+  try{
+    // Load existing to avoid duplicates
+    await loadColaboradores();
+    const existingNames=new Set(allColaboradores.map(c=>c.nome.toLowerCase().trim()));
+    const toImport=demoColaboradores.filter(c=>!existingNames.has(c.nome.toLowerCase().trim()));
+    if(!toImport.length){toast('Todos os colaboradores já estão cadastrados.','success');if(btn){btn.disabled=false;btn.textContent='📤 Importar para Firebase';}return;}
+    // Batch write (Firestore limit: 500/batch)
+    const ts=firebase.firestore.FieldValue.serverTimestamp();
+    let batch=db.batch(), count=0, total=0;
+    for(const c of toImport){
+      const ref=db.collection('colaboradores').doc();
+      batch.set(ref,{nome:c.nome,funcao:c.funcao,depto:c.depto||'',criadoEm:ts});
+      count++;total++;
+      if(count===499){await batch.commit();batch=db.batch();count=0;}
+    }
+    if(count>0) await batch.commit();
+    await loadColaboradores();
+    toast(`✅ ${total} colaborador${total!==1?'es':''} importado${total!==1?'s':''}!`,'success');
+    renderColaboradores();
+  }catch(e){
+    console.error(e);
+    toast(`❌ Erro na importação: ${e.message}`,'error');
+    if(btn){btn.disabled=false;btn.textContent='📤 Importar para Firebase';}
+  }
+}
+
+// ── AUTOCOMPLETE NO MODAL DE LANÇAMENTO ───────
+function filterColabSuggestions(){
+  const q=(document.getElementById('f-nome')?.value||'').toLowerCase().trim();
+  const box=document.getElementById('colab-suggestions');
+  if(!box) return;
+  const matches=q
+    ? allColaboradores.filter(c=>c.nome.toLowerCase().includes(q)||c.funcao.toLowerCase().includes(q))
+    : allColaboradores;
+  if(!matches.length){
+    box.innerHTML=`<div class="colab-option-empty">Nenhum colaborador encontrado</div>`;
+    box.style.display='block'; return;
+  }
+  box.innerHTML=matches.map(c=>`
+    <div class="colab-option" onmousedown="selectColab('${c.id}')">
+      <div class="colab-option-avatar">${c.nome[0].toUpperCase()}</div>
+      <div class="colab-option-info">
+        <div class="colab-option-name">${c.nome}</div>
+        <div class="colab-option-func">${c.funcao}${c.depto?` · ${c.depto}`:''}</div>
+      </div>
+    </div>`).join('');
+  box.style.display='block';
+}
+function selectColab(id){
+  const c=allColaboradores.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('f-nome').value=c.nome;
+  document.getElementById('f-funcao').value=c.funcao;
+  hideColabSuggestions();
+}
+function hideColabSuggestions(){
+  const box=document.getElementById('colab-suggestions');
+  if(box) box.style.display='none';
 }
 
 // ── USUÁRIOS ──────────────────────────────────
