@@ -5,24 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SysFolgas – Controle de Ausências</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-<script>
-// Firebase loaded lazily only when not in demo mode
-function loadFirebase(cb){
-  const scripts=[
-    'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
-    'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js',
-    'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'
-  ];
-  let loaded=0;
-  scripts.forEach(src=>{
-    const s=document.createElement('script');
-    s.src=src;
-    s.onload=()=>{if(++loaded===scripts.length)cb();};
-    s.onerror=()=>console.warn('Firebase script failed:',src);
-    document.head.appendChild(s);
-  });
-}
-</script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -807,13 +792,11 @@ function init(){
     document.body.style.paddingTop='40px';
     showAuthScreen(); return;
   }
-  loadFirebase(()=>{
-    try{
-      app=firebase.initializeApp(firebaseConfig);
-      auth=firebase.auth(); db=firebase.firestore();
-      auth.onAuthStateChanged(u=>u?loginSuccess(u):showAuthScreen());
-    }catch(e){console.error('Firebase init error:',e);showAuthScreen();}
-  });
+  try{
+    app=firebase.initializeApp(firebaseConfig);
+    auth=firebase.auth(); db=firebase.firestore();
+    auth.onAuthStateChanged(u=>u?loginSuccess(u):showAuthScreen());
+  }catch(e){console.error('Firebase init error:',e);showAuthScreen();}
 }
 
 // ── AUTH ──────────────────────────────────────
@@ -1278,7 +1261,17 @@ async function saveLancamento(){
     if(editingId)await db.collection('lancamentos').doc(editingId).update(data);
     else await db.collection('lancamentos').add(data);
     closeModal();toast('✅ Lançamento salvo!','success');renderLancamentos();
-  }catch(e){msg.className='auth-msg error';msg.textContent='Erro ao salvar. Tente novamente.';}
+  }catch(e){
+    console.error('Firestore save error:',e);
+    let errMsg='Erro ao salvar. Tente novamente.';
+    if(e.code==='permission-denied'||e.code==='PERMISSION_DENIED')
+      errMsg='❌ Sem permissão. Verifique as regras do Firestore no console Firebase.';
+    else if(e.code==='unauthenticated')
+      errMsg='❌ Sessão expirada. Faça login novamente.';
+    else if(e.message)
+      errMsg=`❌ ${e.message}`;
+    msg.className='auth-msg error';msg.textContent=errMsg;
+  }
 }
 function editLancamento(id){openModal(id);}
 async function deleteLancamento(id){
@@ -1594,7 +1587,7 @@ function toast(msg,type='success'){
   setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(30px)';t.style.transition='all .3s';setTimeout(()=>t.remove(),300);},3000);
 }
 
-init();
+window.addEventListener('load', init);
 </script>
 </body>
 </html>
