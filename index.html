@@ -891,7 +891,6 @@ tbody tr:nth-child(even) td{background:rgba(255,255,255,.014)}
       <div class="ff"><label>Senha</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div id="login-msg" class="auth-msg"></div>
       <button class="btn-primary" onclick="doLogin()">Entrar no Sistema</button>
-
     </div>
     <div id="form-register" class="auth-form" style="display:none">
       <div class="ff"><label>Nome Completo</label><input type="text" id="reg-name" placeholder="João da Silva"/></div>
@@ -1098,13 +1097,11 @@ tbody tr:nth-child(even) td{background:rgba(255,255,255,.014)}
       <button class="modal-close" onclick="closeBhImportModal()">✕</button>
     </div>
     <div class="modal-body">
-      <!-- Data de referência -->
       <div class="csv-date-row">
         <label>Data de Referência do Saldo</label>
         <input type="date" id="bh-ref-date"/>
         <span style="font-size:12px;color:var(--text3);flex:1">Lançamentos após esta data serão descontados do saldo.</span>
       </div>
-      <!-- Drop zone -->
       <div class="csv-drop-zone" id="bh-drop-zone"
         onclick="document.getElementById('bh-file-input').click()"
         ondragover="event.preventDefault();this.classList.add('drag')"
@@ -1115,7 +1112,6 @@ tbody tr:nth-child(even) td{background:rgba(255,255,255,.014)}
         <div class="csv-drop-sub">Formatos aceitos: CSV com colunas Nome e Saldo (HH:MM ou decimal)</div>
       </div>
       <input type="file" id="bh-file-input" accept=".csv,.txt" style="display:none" onchange="handleBhFile(this.files[0])"/>
-      <!-- Preview -->
       <div id="bh-preview" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px">
           <span style="font-size:13px;font-weight:600;color:var(--text)" id="bh-preview-summary"></span>
@@ -1167,6 +1163,11 @@ const IS_DEMO = firebaseConfig.apiKey === "SUA_API_KEY";
 let app, auth, db;
 let currentUser=null, editingId=null, allRecords=[], chartInstance=null;
 let allColaboradores=[], editingColabId=null;
+
+// ── STATE ─────────────────────────────────────
+let dashFilters={de:'',ate:'',colab:'',motivo:''};
+// ▼▼▼ NEW: Lançamentos filter state ▼▼▼
+let lancFilters={de:'',ate:'',colab:'',motivo:'',tipo:''};
 
 // Demo colaboradores
 const demoColaboradores=[
@@ -1377,7 +1378,6 @@ function showPage(page){
   const themeBtn=`<button class="theme-btn" id="app-theme-btn" onclick="toggleTheme()" title="Alternar tema">${themeIco}</button>`;
   const ta=document.getElementById('topbar-actions');
 
-  // Permission gate
   if(!hasPermission(page)){
     ta.innerHTML=themeBtn;
     document.getElementById('content').innerHTML=`
@@ -1413,11 +1413,10 @@ async function loadColaboradores(){
   try{const s=await db.collection('colaboradores').orderBy('nome').get();allColaboradores=s.docs.map(d=>({id:d.id,...d.data()}));}
   catch(e){allColaboradores=[];console.error('loadColaboradores:',e);}
 }
+
 // ── WORKING SCHEDULE HELPERS ──────────────────
-// Mon–Fri: 08:00–12:00 (4h) + 14:00–18:00 (4h) = 8h/day
-// Saturday: 08:00–12:00 = 4h/day | Sunday = 0h
 function timeToMinutes(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
-function workHoursPerDay(dow){if(dow===0)return 0;return dow===6?4:8;} // 0=Sun,6=Sat
+function workHoursPerDay(dow){if(dow===0)return 0;return dow===6?4:8;}
 function workingDaysBetween(a,b){
   const s=new Date(a+'T00:00:00'),e=new Date(b+'T00:00:00');
   let c=0;
@@ -1445,7 +1444,6 @@ function fmtHours(h){
   const hh=Math.floor(h),mm=Math.round((h-hh)*60);
   return mm>0?`${hh}h ${mm}min`:`${hh}h`;
 }
-// legacy alias (kept for chart/table uses that count days)
 function daysBetween(a,b){return workingDaysBetween(a,b);}
 function fmtDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
 function motivoBadge(m){
@@ -1454,8 +1452,6 @@ function motivoBadge(m){
 }
 
 // ── DASHBOARD STATE ──────────────────────────
-let dashFilters={de:'',ate:'',colab:'',motivo:''};
-
 function getDashFiltered(){
   let f=allRecords;
   if(dashFilters.de)    f=f.filter(r=>r.inicio>=dashFilters.de);
@@ -1464,7 +1460,6 @@ function getDashFiltered(){
   if(dashFilters.motivo)f=f.filter(r=>r.motivo===dashFilters.motivo);
   return f;
 }
-
 function applyDashboardFilters(){
   dashFilters.de    =document.getElementById('df-de')?.value||'';
   dashFilters.ate   =document.getElementById('df-ate')?.value||'';
@@ -1472,7 +1467,6 @@ function applyDashboardFilters(){
   dashFilters.motivo=document.getElementById('df-mot')?.value||'';
   renderDashboardContent();
 }
-
 function clearDashboardFilters(){
   dashFilters={de:'',ate:'',colab:'',motivo:''};
   const ids=['df-de','df-ate','df-colab','df-mot'];
@@ -1488,7 +1482,6 @@ function renderDashboardContent(){
   const doMes=recs.filter(r=>{const d=new Date(r.inicio+'T00:00:00');return d.getMonth()===mes&&d.getFullYear()===ano;}).length;
   const uniqColab=new Set(recs.map(r=>r.nome)).size;
 
-  // Active filter tags
   const tags=[];
   if(dashFilters.de||dashFilters.ate){
     let t=dashFilters.de&&dashFilters.ate?`${fmtDate(dashFilters.de)} → ${fmtDate(dashFilters.ate)}`:dashFilters.de?`A partir de ${fmtDate(dashFilters.de)}`:`Até ${fmtDate(dashFilters.ate)}`;
@@ -1498,7 +1491,6 @@ function renderDashboardContent(){
   if(dashFilters.motivo) tags.push(`🏷️ ${dashFilters.motivo}`);
   const stripHTML=tags.length?`<div class="dash-filter-strip">${tags.map(t=>`<span class="dash-filter-active-tag">${t}</span>`).join('')}</div>`:`<div class="dash-filter-strip"></div>`;
 
-  // Distribuição por motivo — in HOURS (all motivos present in filtered records)
   const horasMot={};
   recs.forEach(r=>{
     const m=r.motivo||'Outros';
@@ -1521,7 +1513,6 @@ function renderDashboardContent(){
       </div>`;
     }).join('')||'<div style="color:var(--text3);font-size:13px">Nenhum registro no período.</div>';
 
-  // Saldo BH do colaborador filtrado
   let saldoBHCard = '';
   if(dashFilters.colab && activeSnapshot){
     const saldo = calcSaldoAtual(dashFilters.colab, activeSnapshot, allRecords);
@@ -1543,12 +1534,12 @@ function renderDashboardContent(){
             <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:center">
               <div>
                 <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Saldo no CSV</div>
-                <div style="font-size:20px;font-weight:800;font-family:'Syne',sans-serif;color:var(--text)">${saldoBase!==null?(saldoBase<0?'−':'+')+fmtHours(Math.abs(saldoBase)):'—'}</div>
+                <div style="font-size:20px;font-weight:800;color:var(--text)">${saldoBase!==null?(saldoBase<0?'−':'+')+fmtHours(Math.abs(saldoBase)):'—'}</div>
               </div>
               <div style="font-size:20px;color:var(--text3)">−</div>
               <div>
                 <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Usado após ref.</div>
-                <div style="font-size:20px;font-weight:800;font-family:'Syne',sans-serif;color:var(--danger)">${usadoAposRef>0?fmtHours(usadoAposRef):'—'}</div>
+                <div style="font-size:20px;font-weight:800;color:var(--danger)">${usadoAposRef>0?fmtHours(usadoAposRef):'—'}</div>
               </div>
               <div style="font-size:20px;color:var(--text3)">=</div>
               <div>
@@ -1601,7 +1592,6 @@ async function renderDashboard(){
   document.getElementById('content').innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
   await loadRecords();
   await loadSnapshot();
-  // Sync filter state to inputs if filters were set before
   const colabOptions=[...new Set([...allColaboradores.map(c=>c.nome),...allRecords.map(r=>r.nome)])].sort();
   document.getElementById('content').innerHTML=`
     <div class="dash-filters">
@@ -1628,17 +1618,161 @@ async function renderDashboard(){
   renderDashboardContent();
 }
 
-// ── LANÇAMENTOS ───────────────────────────────
+// ══════════════════════════════════════════════
+// LANÇAMENTOS — com filtros integrados
+// ══════════════════════════════════════════════
 async function renderLancamentos(){
   document.getElementById('content').innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
   await loadRecords();
+  const colabOptions=[...new Set([...allColaboradores.map(c=>c.nome),...allRecords.map(r=>r.nome)])].sort();
+  const filtered=getLancamentosFiltered();
+
   document.getElementById('content').innerHTML=`
+    <!-- BARRA DE FILTROS -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:13px">
+        <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3)">🔍 Filtros</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <button class="btn-dash-clear" id="lanc-clear-btn" onclick="clearLancamentosFilters()"
+          style="display:${hasActiveLancFilters()?'block':'none'}">✕ Limpar filtros</button>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="dash-filter-group">
+          <span class="dash-filter-label">De</span>
+          <input type="date" id="lf-de" value="${lancFilters.de}" onchange="applyLancamentosFilters()"/>
+        </div>
+        <div class="dash-filter-group">
+          <span class="dash-filter-label">Até</span>
+          <input type="date" id="lf-ate" value="${lancFilters.ate}" onchange="applyLancamentosFilters()"/>
+        </div>
+        <div class="dash-filter-group grow" style="min-width:185px;max-width:280px">
+          <span class="dash-filter-label">Colaborador</span>
+          <select id="lf-colab" onchange="applyLancamentosFilters()">
+            <option value="">Todos os colaboradores</option>
+            ${colabOptions.map(n=>`<option value="${n}" ${lancFilters.colab===n?'selected':''}>${n}</option>`).join('')}
+          </select>
+        </div>
+        <div class="dash-filter-group">
+          <span class="dash-filter-label">Motivo</span>
+          <select id="lf-mot" onchange="applyLancamentosFilters()">
+            <option value="">Todos os motivos</option>
+            <option ${lancFilters.motivo==='Banco de Horas'?'selected':''}>Banco de Horas</option>
+            <option ${lancFilters.motivo==='Folga'?'selected':''}>Folga</option>
+            <option ${lancFilters.motivo==='Atestado'?'selected':''}>Atestado</option>
+            <option ${lancFilters.motivo==='Declaração'?'selected':''}>Declaração</option>
+          </select>
+        </div>
+        <div class="dash-filter-group">
+          <span class="dash-filter-label">Tipo</span>
+          <select id="lf-tipo" onchange="applyLancamentosFilters()">
+            <option value="">Integral e Parcial</option>
+            <option value="integral" ${lancFilters.tipo==='integral'?'selected':''}>🟢 Integral</option>
+            <option value="parcial"  ${lancFilters.tipo==='parcial' ?'selected':''}>🟡 Parcial</option>
+          </select>
+        </div>
+      </div>
+      <div class="dash-filter-strip" id="lanc-filter-strip" style="margin-top:${hasActiveLancFilters()?'11':'0'}px;margin-bottom:0">
+        ${buildLancFilterStrip()}
+      </div>
+    </div>
+
+    <!-- TABELA -->
     <div class="card">
       <div class="card-header">
-        <div class="card-title">Todos os Lançamentos <span style="font-size:14px;font-weight:500;color:var(--text2)">(${allRecords.length})</span></div>
+        <div class="card-title">
+          Lançamentos
+          <span style="font-size:14px;font-weight:500;color:var(--text2)" id="lanc-count">
+            (${filtered.length} de ${allRecords.length})
+          </span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          ${hasActiveLancFilters()?'<span class="dash-filter-active-tag">Filtrado</span>':''}
+          <button class="btn-excel" style="font-size:12px;padding:7px 14px" onclick="exportExcelLancamentos()">📥 Exportar Excel</button>
+        </div>
       </div>
-      <div class="table-wrap">${tableHTML(allRecords,true)}</div>
+      <div class="table-wrap" id="lanc-table">${tableHTML(filtered,true)}</div>
     </div>`;
+}
+
+// ── Helpers para filtros de lançamentos ──────
+function hasActiveLancFilters(){
+  return !!(lancFilters.de||lancFilters.ate||lancFilters.colab||lancFilters.motivo||lancFilters.tipo);
+}
+
+function getLancamentosFiltered(){
+  let f=allRecords;
+  if(lancFilters.de)     f=f.filter(r=>r.inicio>=lancFilters.de);
+  if(lancFilters.ate)    f=f.filter(r=>r.fim<=lancFilters.ate);
+  if(lancFilters.colab)  f=f.filter(r=>r.nome===lancFilters.colab);
+  if(lancFilters.motivo) f=f.filter(r=>r.motivo===lancFilters.motivo);
+  if(lancFilters.tipo)   f=f.filter(r=>(r.tipo||'integral')===lancFilters.tipo);
+  return f;
+}
+
+function buildLancFilterStrip(){
+  const tags=[];
+  if(lancFilters.de||lancFilters.ate){
+    const t=lancFilters.de&&lancFilters.ate
+      ?`${fmtDate(lancFilters.de)} → ${fmtDate(lancFilters.ate)}`
+      :lancFilters.de?`A partir de ${fmtDate(lancFilters.de)}`:`Até ${fmtDate(lancFilters.ate)}`;
+    tags.push('📅 '+t);
+  }
+  if(lancFilters.colab)  tags.push(`👤 ${lancFilters.colab}`);
+  if(lancFilters.motivo) tags.push(`🏷️ ${lancFilters.motivo}`);
+  if(lancFilters.tipo)   tags.push(lancFilters.tipo==='integral'?'🟢 Integral':'🟡 Parcial');
+  return tags.map(t=>`<span class="dash-filter-active-tag">${t}</span>`).join('');
+}
+
+function applyLancamentosFilters(){
+  lancFilters.de    =document.getElementById('lf-de')?.value||'';
+  lancFilters.ate   =document.getElementById('lf-ate')?.value||'';
+  lancFilters.colab =document.getElementById('lf-colab')?.value||'';
+  lancFilters.motivo=document.getElementById('lf-mot')?.value||'';
+  lancFilters.tipo  =document.getElementById('lf-tipo')?.value||'';
+  const filtered=getLancamentosFiltered();
+  const tbl    =document.getElementById('lanc-table');
+  const cnt    =document.getElementById('lanc-count');
+  const clrBtn =document.getElementById('lanc-clear-btn');
+  const strip  =document.getElementById('lanc-filter-strip');
+  if(tbl)   tbl.innerHTML=tableHTML(filtered,true);
+  if(cnt)   cnt.textContent=`(${filtered.length} de ${allRecords.length})`;
+  if(clrBtn)clrBtn.style.display=hasActiveLancFilters()?'block':'none';
+  if(strip){
+    strip.innerHTML=buildLancFilterStrip();
+    strip.style.marginTop=hasActiveLancFilters()?'11px':'0';
+  }
+}
+
+function clearLancamentosFilters(){
+  lancFilters={de:'',ate:'',colab:'',motivo:'',tipo:''};
+  ['lf-de','lf-ate','lf-colab','lf-mot','lf-tipo'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  applyLancamentosFilters();
+}
+
+function exportExcelLancamentos(){
+  const data=getLancamentosFiltered().map(r=>{
+    const tipo=r.tipo||'integral';
+    const horario=tipo==='parcial'&&r.horaInicio&&r.horaFim?`${r.horaInicio} – ${r.horaFim}`:'—';
+    const wd=workingDaysBetween(r.inicio,r.fim);
+    const hrs=workingHoursBetween(r.inicio,r.fim,tipo,r.horaInicio||'',r.horaFim||'');
+    return{
+      'Nome':r.nome,'Função':r.funcao,
+      'Data Início':fmtDate(r.inicio),'Data Fim':fmtDate(r.fim),
+      'Dias Úteis':wd,'Horas Úteis':fmtHours(hrs),
+      'Tipo':tipo==='parcial'?'Parcial':'Integral',
+      'Horário (Parcial)':horario,
+      'Motivo':r.motivo,'Observação':r.obs||''
+    };
+  });
+  if(!data.length){toast('Nenhum registro para exportar.','error');return;}
+  const ws=XLSX.utils.json_to_sheet(data);
+  ws['!cols']=[{wch:26},{wch:22},{wch:13},{wch:13},{wch:6},{wch:11},{wch:18},{wch:18},{wch:38}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Lançamentos');
+  XLSX.writeFile(wb,`lancamentos_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('📥 Excel exportado!','success');
 }
 
 function tipoBadge(r){
@@ -1657,7 +1791,7 @@ function tableHTML(records, withActions=false){
     <td class="td-muted">${r.funcao}</td>
     <td>${fmtDate(r.inicio)}</td>
     <td>${fmtDate(r.fim)}</td>
-    <td style="text-align:center;font-weight:700;font-family:'Syne',sans-serif;font-size:15px">${wd}</td>
+    <td style="text-align:center;font-weight:700;font-size:15px">${wd}</td>
     <td style="text-align:center;font-size:13px;color:var(--text2)">${fmtHours(hrs)}</td>
     <td>${tipoBadge(r)}</td>
     <td>${motivoBadge(r.motivo)}</td>
@@ -1691,7 +1825,6 @@ function openModal(id=null){
       if(std.includes(r.motivo)){document.getElementById('f-motivo').value=r.motivo;document.getElementById('f-motivo-custom-wrap').style.display='none';}
       else{document.getElementById('f-motivo').value='__outro__';document.getElementById('f-motivo-custom-wrap').style.display='block';document.getElementById('f-motivo-custom').value=r.motivo;}
       document.getElementById('f-obs').value=r.obs||'';
-      // restore tipo
       const tipo=r.tipo||'integral';
       setTipo(tipo);
       if(tipo==='parcial'){
@@ -1712,7 +1845,6 @@ function openModal(id=null){
 function closeModal(){document.getElementById('modal-lancamento').classList.remove('open');}
 function checkCustomMotivo(){document.getElementById('f-motivo-custom-wrap').style.display=document.getElementById('f-motivo').value==='__outro__'?'block':'none';}
 
-// ── TIPO: INTEGRAL / PARCIAL ─────────────────
 function setTipo(tipo){
   document.getElementById('f-tipo').value=tipo;
   const btnI=document.getElementById('tipo-integral');
@@ -1743,17 +1875,12 @@ function calcDuration(){
   const totalMin=(eh*60+em)-(hh*60+mm);
   if(totalMin<=0){
     tag.classList.add('visible');
-    tag.style.background='rgba(245,97,94,.09)';
-    tag.style.borderColor='rgba(245,97,94,.22)';
-    tag.style.color='var(--danger)';
-    tag.textContent='⚠️ Hora fim deve ser maior que hora início';
-    return;
+    tag.style.background='rgba(245,97,94,.09)';tag.style.borderColor='rgba(245,97,94,.22)';tag.style.color='var(--danger)';
+    tag.textContent='⚠️ Hora fim deve ser maior que hora início';return;
   }
   const h=Math.floor(totalMin/60), m=totalMin%60;
   tag.classList.add('visible');
-  tag.style.background='rgba(79,142,247,.09)';
-  tag.style.borderColor='rgba(79,142,247,.2)';
-  tag.style.color='var(--accent)';
+  tag.style.background='rgba(79,142,247,.09)';tag.style.borderColor='rgba(79,142,247,.2)';tag.style.color='var(--accent)';
   tag.textContent=`⏱️ Duração: ${h>0?h+'h ':''}${m>0?m+'min':''}`;
 }
 
@@ -1806,12 +1933,9 @@ async function saveLancamento(){
   }catch(e){
     console.error('Firestore save error:',e);
     let errMsg='Erro ao salvar. Tente novamente.';
-    if(e.code==='permission-denied'||e.code==='PERMISSION_DENIED')
-      errMsg='❌ Sem permissão. Verifique as regras do Firestore no console Firebase.';
-    else if(e.code==='unauthenticated')
-      errMsg='❌ Sessão expirada. Faça login novamente.';
-    else if(e.message)
-      errMsg=`❌ ${e.message}`;
+    if(e.code==='permission-denied'||e.code==='PERMISSION_DENIED') errMsg='❌ Sem permissão. Verifique as regras do Firestore no console Firebase.';
+    else if(e.code==='unauthenticated') errMsg='❌ Sessão expirada. Faça login novamente.';
+    else if(e.message) errMsg=`❌ ${e.message}`;
     msg.className='auth-msg error';msg.textContent=errMsg;
   }
 }
@@ -1824,20 +1948,16 @@ async function deleteLancamento(id){
 }
 
 // ════════════════════════════════════════════
-// RELATÓRIO — 2 colunas: gráfico | tabela
+// RELATÓRIO
 // ════════════════════════════════════════════
 async function renderRelatorio(){
-  // Make content fill the remaining height (no extra scroll)
   const content = document.getElementById('content');
   content.style.padding='0';
   content.style.display='flex';
   content.style.flexDirection='column';
   content.style.overflow='hidden';
-
   await loadRecords();
-
   content.innerHTML=`
-    <!-- FILTERS -->
     <div class="filters-bar">
       <div class="filter-group"><span class="filter-label">De</span><input type="date" id="f-de"/></div>
       <div class="filter-group"><span class="filter-label">Até</span><input type="date" id="f-ate"/></div>
@@ -1866,11 +1986,7 @@ async function renderRelatorio(){
       <button class="btn-filter" onclick="applyFilters()">🔍 Filtrar</button>
       <button class="btn-excel"  onclick="exportExcel()">📥 Exportar Excel</button>
     </div>
-
-    <!-- FULL-WIDTH TABLE BODY -->
     <div class="rel-body" id="rel-body" style="grid-template-columns:1fr">
-
-      <!-- TABLE PANEL -->
       <div class="rel-table-panel">
         <div class="panel-thead">
           <span class="panel-thead-title">Registros Filtrados</span>
@@ -1878,9 +1994,7 @@ async function renderRelatorio(){
         </div>
         <div id="rel-table" class="table-wrap" style="flex:1;overflow:auto">${tableHTML(allRecords)}</div>
       </div>
-
     </div>`;
-
 }
 
 function getFilteredRecords(){
@@ -1934,76 +2048,45 @@ function buildChart(records){
   const canvas=document.getElementById('horasChart');
   const emptyEl=document.getElementById('chart-empty');
   if(!canvas) return;
-  if(!labels.length){
-    emptyEl.style.display='block';canvas.style.display='none';
-    destroyChart();renderLegend([]);return;
-  }
+  if(!labels.length){emptyEl.style.display='block';canvas.style.display='none';destroyChart();renderLegend([]);return;}
   emptyEl.style.display='none';canvas.style.display='block';
-
   const isDark=currentTheme==='dark';
   const pal=isDark?PAL_DARK:PAL_LIGHT;
   const gridColor=isDark?'rgba(255,255,255,.05)':'rgba(0,0,0,.07)';
   const tickColor=isDark?'#828ba8':'#525d7a';
-
-  // sort biggest total first
   const sorted=labels.map(n=>({n,t:MOTIVOS_STD.reduce((s,m)=>s+(colabMap[n][m]||0),0)})).sort((a,b)=>b.t-a.t);
   const sortedLabels=sorted.map(x=>x.n);
-
   const datasets=MOTIVOS_STD.map((mot,i)=>({
-    label:mot,
-    data:sortedLabels.map(n=>colabMap[n][mot]||0),
-    backgroundColor:pal[i].bg,
-    borderColor:pal[i].brd,
-    borderWidth:1.5,
-    borderRadius:5,
-    borderSkipped:false,
+    label:mot,data:sortedLabels.map(n=>colabMap[n][mot]||0),
+    backgroundColor:pal[i].bg,borderColor:pal[i].brd,
+    borderWidth:1.5,borderRadius:5,borderSkipped:false,
   }));
-
   destroyChart();
-  // Auto-height: each bar ~52px
   const wrapEl=document.getElementById('chart-canvas-wrap');
   const barH=Math.max(120, sortedLabels.length*54);
   canvas.style.height=barH+'px';
   if(wrapEl) wrapEl.style.minHeight=(barH+40)+'px';
-
   chartInstance=new Chart(canvas.getContext('2d'),{
-    type:'bar',
-    data:{labels:sortedLabels,datasets},
+    type:'bar',data:{labels:sortedLabels,datasets},
     options:{
-      indexAxis:'y',
-      responsive:true,
-      maintainAspectRatio:false,
-      animation:{duration:550,easing:'easeOutQuart'},
-      layout:{padding:{right:6}},
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      animation:{duration:550,easing:'easeOutQuart'},layout:{padding:{right:6}},
       plugins:{
         legend:{display:false},
         tooltip:{
-          backgroundColor:isDark?'#191d28':'#fff',
-          titleColor:isDark?'#e9ecf5':'#141928',
-          bodyColor:isDark?'#828ba8':'#525d7a',
-          borderColor:isDark?'#272d44':'#d8ddef',
+          backgroundColor:isDark?'#191d28':'#fff',titleColor:isDark?'#e9ecf5':'#141928',
+          bodyColor:isDark?'#828ba8':'#525d7a',borderColor:isDark?'#272d44':'#d8ddef',
           borderWidth:1,padding:12,
           callbacks:{
             title:i=>`👤 ${i[0].label}`,
             label:c=>c.raw>0?`  ${c.dataset.label}: ${fmtHours(c.raw)}`:null,
-            afterBody:i=>{
-              const tot=datasets.reduce((s,d)=>s+d.data[i[0].dataIndex],0);
-              return tot>0?['  ─────────────',`  Total: ${fmtHours(tot)}`]:[];
-            }
+            afterBody:i=>{const tot=datasets.reduce((s,d)=>s+d.data[i[0].dataIndex],0);return tot>0?['  ─────────────',`  Total: ${fmtHours(tot)}`]:[];}
           }
         }
       },
       scales:{
-        x:{
-          stacked:true,beginAtZero:true,
-          grid:{color:gridColor},
-          ticks:{color:tickColor,font:{family:'DM Sans',size:12.5},callback:v=>v+'h'},
-          title:{display:true,text:'Horas úteis',color:tickColor,font:{family:'DM Sans',size:12.5}},
-        },
-        y:{
-          stacked:true,grid:{display:false},
-          ticks:{color:tickColor,font:{family:'DM Sans',size:13.5,weight:'600'}},
-        },
+        x:{stacked:true,beginAtZero:true,grid:{color:gridColor},ticks:{color:tickColor,font:{family:'DM Sans',size:12.5},callback:v=>v+'h'},title:{display:true,text:'Horas úteis',color:tickColor,font:{family:'DM Sans',size:12.5}}},
+        y:{stacked:true,grid:{display:false},ticks:{color:tickColor,font:{family:'DM Sans',size:13.5,weight:'600'}}},
       },
     },
   });
@@ -2014,10 +2097,8 @@ function renderLegend(pal){
   const el=document.getElementById('legend-container');
   if(!el) return;
   if(!pal.length){el.innerHTML='';return;}
-  el.innerHTML=MOTIVOS_STD.map((m,i)=>`
-    <div class="legend-item"><span class="legend-dot" style="background:${pal[i].brd}"></span>${m}</div>`).join('');
+  el.innerHTML=MOTIVOS_STD.map((m,i)=>`<div class="legend-item"><span class="legend-dot" style="background:${pal[i].brd}"></span>${m}</div>`).join('');
 }
-
 function renderMotivoSummary(records){
   const el=document.getElementById('motivo-summary');
   if(!el) return;
@@ -2034,21 +2115,14 @@ function renderMotivoSummary(records){
     </div>`).join('');
 }
 
-// ── EXCEL ──────────────────────────────────────
+// ── EXCEL (Relatório) ──────────────────────────
 function exportExcel(){
   const data=getFilteredRecords().map(r=>{
     const tipo=r.tipo||'integral';
     const horario=tipo==='parcial'&&r.horaInicio&&r.horaFim?`${r.horaInicio} – ${r.horaFim}`:'—';
     const wd=workingDaysBetween(r.inicio,r.fim);
     const hrs=workingHoursBetween(r.inicio,r.fim,tipo,r.horaInicio||'',r.horaFim||'');
-    return{
-      'Nome':r.nome,'Função':r.funcao,
-      'Data Início':fmtDate(r.inicio),'Data Fim':fmtDate(r.fim),
-      'Dias Úteis':wd,'Horas Úteis':fmtHours(hrs),
-      'Tipo':tipo==='parcial'?'Parcial':'Integral',
-      'Horário (Parcial)':horario,
-      'Motivo':r.motivo,'Observação':r.obs||''
-    };
+    return{'Nome':r.nome,'Função':r.funcao,'Data Início':fmtDate(r.inicio),'Data Fim':fmtDate(r.fim),'Dias Úteis':wd,'Horas Úteis':fmtHours(hrs),'Tipo':tipo==='parcial'?'Parcial':'Integral','Horário (Parcial)':horario,'Motivo':r.motivo,'Observação':r.obs||''};
   });
   if(!data.length){toast('Nenhum registro para exportar.','error');return;}
   const ws=XLSX.utils.json_to_sheet(data);
@@ -2078,9 +2152,7 @@ async function renderColaboradores(){
           style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;width:220px"/>
       </div>
     </div>
-    <div class="colab-grid" id="colab-grid">
-      ${renderColabCards(allColaboradores)}
-    </div>`;
+    <div class="colab-grid" id="colab-grid">${renderColabCards(allColaboradores)}</div>`;
 }
 function renderColabCards(list){
   return list.map(c=>`
@@ -2110,14 +2182,8 @@ function openColabModal(id=null){
   document.getElementById('modal-colab-msg').className='auth-msg';
   if(id){
     const c=allColaboradores.find(x=>x.id===id);
-    if(c){
-      document.getElementById('fc-nome').value=c.nome;
-      document.getElementById('fc-funcao').value=c.funcao;
-      document.getElementById('fc-depto').value=c.depto||'';
-    }
-  } else {
-    ['fc-nome','fc-funcao','fc-depto'].forEach(i=>document.getElementById(i).value='');
-  }
+    if(c){document.getElementById('fc-nome').value=c.nome;document.getElementById('fc-funcao').value=c.funcao;document.getElementById('fc-depto').value=c.depto||'';}
+  } else {['fc-nome','fc-funcao','fc-depto'].forEach(i=>document.getElementById(i).value='');}
   document.getElementById('modal-colaborador').classList.add('open');
   setTimeout(()=>document.getElementById('fc-nome').focus(),80);
 }
@@ -2149,18 +2215,15 @@ async function deleteColaborador(id){
   try{await db.collection('colaboradores').doc(id).delete();await loadColaboradores();toast('🗑️ Excluído.','success');renderColaboradores();}
   catch(e){toast('Erro ao excluir.','error');}
 }
-
 async function importColaboradoresFirebase(){
   if(!confirm(`Importar ${demoColaboradores.length} colaboradores para o Firebase?\n\nColaboradores com o mesmo nome serão ignorados (sem duplicatas).`)) return;
   const btn=document.querySelector('[onclick="importColaboradoresFirebase()"]');
   if(btn){btn.disabled=true;btn.textContent='⏳ Importando…';}
   try{
-    // Load existing to avoid duplicates
     await loadColaboradores();
     const existingNames=new Set(allColaboradores.map(c=>c.nome.toLowerCase().trim()));
     const toImport=demoColaboradores.filter(c=>!existingNames.has(c.nome.toLowerCase().trim()));
     if(!toImport.length){toast('Todos os colaboradores já estão cadastrados.','success');if(btn){btn.disabled=false;btn.textContent='📤 Importar para Firebase';}return;}
-    // Batch write (Firestore limit: 500/batch)
     const ts=firebase.firestore.FieldValue.serverTimestamp();
     let batch=db.batch(), count=0, total=0;
     for(const c of toImport){
@@ -2174,24 +2237,18 @@ async function importColaboradoresFirebase(){
     toast(`✅ ${total} colaborador${total!==1?'es':''} importado${total!==1?'s':''}!`,'success');
     renderColaboradores();
   }catch(e){
-    console.error(e);
-    toast(`❌ Erro na importação: ${e.message}`,'error');
+    console.error(e);toast(`❌ Erro na importação: ${e.message}`,'error');
     if(btn){btn.disabled=false;btn.textContent='📤 Importar para Firebase';}
   }
 }
 
-// ── AUTOCOMPLETE NO MODAL DE LANÇAMENTO ───────
+// ── AUTOCOMPLETE ──────────────────────────────
 function filterColabSuggestions(){
   const q=(document.getElementById('f-nome')?.value||'').toLowerCase().trim();
   const box=document.getElementById('colab-suggestions');
   if(!box) return;
-  const matches=q
-    ? allColaboradores.filter(c=>c.nome.toLowerCase().includes(q)||c.funcao.toLowerCase().includes(q))
-    : allColaboradores;
-  if(!matches.length){
-    box.innerHTML=`<div class="colab-option-empty">Nenhum colaborador encontrado</div>`;
-    box.style.display='block'; return;
-  }
+  const matches=q?allColaboradores.filter(c=>c.nome.toLowerCase().includes(q)||c.funcao.toLowerCase().includes(q)):allColaboradores;
+  if(!matches.length){box.innerHTML=`<div class="colab-option-empty">Nenhum colaborador encontrado</div>`;box.style.display='block';return;}
   box.innerHTML=matches.map(c=>`
     <div class="colab-option" onmousedown="selectColab('${c.id}')">
       <div class="colab-option-avatar">${c.nome[0].toUpperCase()}</div>
@@ -2209,20 +2266,15 @@ function selectColab(id){
   document.getElementById('f-funcao').value=c.funcao;
   hideColabSuggestions();
 }
-function hideColabSuggestions(){
-  const box=document.getElementById('colab-suggestions');
-  if(box) box.style.display='none';
-}
+function hideColabSuggestions(){const box=document.getElementById('colab-suggestions');if(box)box.style.display='none';}
 
 // ══════════════════════════════════════════════
 // BANCO DE HORAS
 // ══════════════════════════════════════════════
-let activeSnapshot = null;   // {dataReferencia, saldos:{nome->horas}, importadoEm, id}
-let bhParsedData   = null;   // staging during CSV import
+let activeSnapshot = null;
+let bhParsedData   = null;
 
-// ── Parse helpers ─────────────────────────────
 function parseHHMM(str){
-  // Handles "HH:MM", "-HH:MM", "+HH:MM", decimal "12.5", "-12.5"
   if(!str) return null;
   str = str.trim().replace(',','.');
   const neg = str.startsWith('-');
@@ -2234,210 +2286,124 @@ function parseHHMM(str){
   const n = parseFloat(abs);
   return isNaN(n) ? null : (neg?-1:1)*n;
 }
-
-// Proper CSV row parser that handles quoted fields with commas inside
 function parseCSVRow(line){
-  const cols=[];
-  let cur='', inQ=false;
+  const cols=[];let cur='',inQ=false;
   for(let i=0;i<line.length;i++){
     const ch=line[i];
-    if(ch==='"'){ inQ=!inQ; continue; }
-    if(ch===','&&!inQ){ cols.push(cur.trim()); cur=''; continue; }
+    if(ch==='"'){inQ=!inQ;continue;}
+    if(ch===','&&!inQ){cols.push(cur.trim());cur='';continue;}
     cur+=ch;
   }
-  cols.push(cur.trim());
-  return cols;
+  cols.push(cur.trim());return cols;
 }
-
 function parseBhCSV(text){
-  const lines = text.replace(/^\uFEFF/,'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
-
-  // Find the header row — must contain "Nome" and "Saldo BH"
-  let headerIdx=-1, cols=[];
+  const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  let headerIdx=-1,cols=[];
   for(let i=0;i<Math.min(10,lines.length);i++){
-    const row = parseCSVRow(lines[i]);
-    const lower = row.map(c=>c.toLowerCase());
-    if(lower.some(c=>c==='nome'||c.includes('colaborador')) &&
-       lower.some(c=>c==='saldo bh'||c.includes('saldo bh'))){
-      headerIdx=i; cols=row.map(c=>c.toLowerCase().trim()); break;
-    }
+    const row=parseCSVRow(lines[i]);const lower=row.map(c=>c.toLowerCase());
+    if(lower.some(c=>c==='nome'||c.includes('colaborador'))&&lower.some(c=>c==='saldo bh'||c.includes('saldo bh'))){headerIdx=i;cols=row.map(c=>c.toLowerCase().trim());break;}
   }
-  if(headerIdx<0)
-    return {error:'Cabeçalho não encontrado. O CSV precisa ter colunas "Nome" e "Saldo BH".'};
-
-  const iNome  = cols.findIndex(c=>c==='nome'||c.includes('colaborador'));
-  // "Saldo BH" — exact match preferred, then partial (avoid "Saldo BH Negativo")
-  let iSaldo = cols.findIndex(c=>c==='saldo bh');
-  if(iSaldo<0) iSaldo = cols.findIndex(c=>c.startsWith('saldo bh')&&!c.includes('negativo'));
-  if(iSaldo<0) iSaldo = cols.findIndex(c=>c.includes('saldo')&&!c.includes('negativo')&&!c.includes('inicial'));
-
-  if(iNome<0||iSaldo<0)
-    return {error:`Colunas necessárias não encontradas. Encontrado: ${cols.join(' | ')}`};
-
-  const rows=[];
-  const SKIP_WORDS=['resumo','total','totais','subtotal'];
+  if(headerIdx<0) return{error:'Cabeçalho não encontrado. O CSV precisa ter colunas "Nome" e "Saldo BH".'};
+  const iNome=cols.findIndex(c=>c==='nome'||c.includes('colaborador'));
+  let iSaldo=cols.findIndex(c=>c==='saldo bh');
+  if(iSaldo<0) iSaldo=cols.findIndex(c=>c.startsWith('saldo bh')&&!c.includes('negativo'));
+  if(iSaldo<0) iSaldo=cols.findIndex(c=>c.includes('saldo')&&!c.includes('negativo')&&!c.includes('inicial'));
+  if(iNome<0||iSaldo<0) return{error:`Colunas necessárias não encontradas. Encontrado: ${cols.join(' | ')}`};
+  const rows=[];const SKIP_WORDS=['resumo','total','totais','subtotal'];
   for(let i=headerIdx+1;i<lines.length;i++){
-    const row=parseCSVRow(lines[i]);
-    const nome=(row[iNome]||'').trim();
+    const row=parseCSVRow(lines[i]);const nome=(row[iNome]||'').trim();
     if(!nome) continue;
     if(SKIP_WORDS.some(w=>nome.toLowerCase().startsWith(w))) continue;
-    // Skip lines that look like numeric-only summary rows
     if(/^[\d.]+$/.test(nome)) continue;
-    const raw=(row[iSaldo]||'').trim();
-    const horas=parseHHMM(raw);
-    rows.push({nome, raw, horas});
+    const raw=(row[iSaldo]||'').trim();const horas=parseHHMM(raw);
+    rows.push({nome,raw,horas});
   }
-  if(!rows.length) return {error:'Nenhum dado de colaborador encontrado após o cabeçalho.'};
-  return {rows, colSaldo: cols[iSaldo]};
+  if(!rows.length) return{error:'Nenhum dado de colaborador encontrado após o cabeçalho.'};
+  return{rows,colSaldo:cols[iSaldo]};
 }
 
-// ── Snapshot load/save ────────────────────────
 async function loadSnapshot(){
-  if(IS_DEMO){ activeSnapshot=null; return; }
+  if(IS_DEMO){activeSnapshot=null;return;}
   try{
-    const snap = await db.collection('bancohoras_snapshots')
-      .orderBy('criadoEm','desc').limit(1).get();
-    if(!snap.empty){
-      const d=snap.docs[0];
-      activeSnapshot={id:d.id,...d.data()};
-    } else { activeSnapshot=null; }
-  }catch(e){ activeSnapshot=null; console.error('loadSnapshot:',e); }
+    const snap=await db.collection('bancohoras_snapshots').orderBy('criadoEm','desc').limit(1).get();
+    if(!snap.empty){const d=snap.docs[0];activeSnapshot={id:d.id,...d.data()};}
+    else{activeSnapshot=null;}
+  }catch(e){activeSnapshot=null;console.error('loadSnapshot:',e);}
 }
 
-// ── Saldo calculation ─────────────────────────
-function calcSaldoAtual(nomeColaborador, snapshot, records){
+function calcSaldoAtual(nomeColaborador,snapshot,records){
   if(!snapshot) return null;
-  // Normalize name for fuzzy match
-  const norm = s => s.toUpperCase().trim();
-  const saldoBase = (() => {
-    const exact = snapshot.saldos[norm(nomeColaborador)];
-    if(exact !== undefined) return exact;
-    // Try partial match
-    const k = Object.keys(snapshot.saldos).find(k=>norm(k).includes(norm(nomeColaborador)) || norm(nomeColaborador).includes(norm(k)));
-    return k !== undefined ? snapshot.saldos[k] : null;
+  const norm=s=>s.toUpperCase().trim();
+  const saldoBase=(()=>{
+    const exact=snapshot.saldos[norm(nomeColaborador)];
+    if(exact!==undefined) return exact;
+    const k=Object.keys(snapshot.saldos).find(k=>norm(k).includes(norm(nomeColaborador))||norm(nomeColaborador).includes(norm(k)));
+    return k!==undefined?snapshot.saldos[k]:null;
   })();
-  if(saldoBase === null) return null;
-  // Sum hours of "Banco de Horas" lançamentos AFTER dataReferencia
-  const ref = snapshot.dataReferencia; // 'YYYY-MM-DD'
-  const usado = records
-    .filter(r => r.motivo==='Banco de Horas' && r.inicio > ref &&
-                 norm(r.nome).includes(norm(nomeColaborador).substring(0,8)))
+  if(saldoBase===null) return null;
+  const ref=snapshot.dataReferencia;
+  const usado=records
+    .filter(r=>r.motivo==='Banco de Horas'&&r.inicio>ref&&norm(r.nome).includes(norm(nomeColaborador).substring(0,8)))
     .reduce((s,r)=>s+workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||''),0);
-  return saldoBase - usado;
+  return saldoBase-usado;
 }
 
 function saldoPill(h){
-  if(h===null) return `<span class="saldo-zero">—</span>`;
-  const fmt = fmtHours(Math.abs(h));
-  const sign = h>=0?'+':'-';
-  if(h>4)    return `<span class="saldo-pill saldo-green">🟢 ${sign}${fmt}</span>`;
-  if(h>=0)   return `<span class="saldo-pill saldo-yellow">🟡 ${sign}${fmt}</span>`;
-  if(h>=-4)  return `<span class="saldo-pill saldo-yellow">🟡 ${sign}${fmt}</span>`;
+  if(h===null) return`<span class="saldo-zero">—</span>`;
+  const fmt=fmtHours(Math.abs(h));const sign=h>=0?'+':'-';
+  if(h>4)    return`<span class="saldo-pill saldo-green">🟢 ${sign}${fmt}</span>`;
+  if(h>=0)   return`<span class="saldo-pill saldo-yellow">🟡 ${sign}${fmt}</span>`;
+  if(h>=-4)  return`<span class="saldo-pill saldo-yellow">🟡 ${sign}${fmt}</span>`;
   return       `<span class="saldo-pill saldo-red">🔴 ${sign}${fmt}</span>`;
 }
 
-// ── Render page ───────────────────────────────
 async function renderBancoHoras(){
-  const c = document.getElementById('content');
+  const c=document.getElementById('content');
   c.innerHTML='<div class="loading"><span class="spin">⟳</span> Carregando…</div>';
-  await loadRecords();
-  await loadSnapshot();
-
-  // Build saldo per collaborator
-  const colabs = allColaboradores.length ? allColaboradores :
-    [...new Set(allRecords.map(r=>r.nome))].map(n=>({nome:n}));
-
-  const rows = colabs.map(col=>{
-    const saldo = calcSaldoAtual(col.nome, activeSnapshot, allRecords);
-    const usado = allRecords
-      .filter(r=>r.motivo==='Banco de Horas' && r.nome.toUpperCase().includes(col.nome.toUpperCase().substring(0,8)))
+  await loadRecords();await loadSnapshot();
+  const colabs=allColaboradores.length?allColaboradores:[...new Set(allRecords.map(r=>r.nome))].map(n=>({nome:n}));
+  const rows=colabs.map(col=>{
+    const saldo=calcSaldoAtual(col.nome,activeSnapshot,allRecords);
+    const usado=allRecords
+      .filter(r=>r.motivo==='Banco de Horas'&&r.nome.toUpperCase().includes(col.nome.toUpperCase().substring(0,8)))
       .reduce((s,r)=>s+workingHoursBetween(r.inicio,r.fim,r.tipo||'integral',r.horaInicio||'',r.horaFim||''),0);
-    return {nome:col.nome, funcao:col.funcao||'—', saldo, usado};
+    return{nome:col.nome,funcao:col.funcao||'—',saldo,usado};
   });
-
-  const negativos = rows.filter(r=>r.saldo!==null && r.saldo<0);
-  const positivos = rows.filter(r=>r.saldo!==null && r.saldo>=0);
-  const semSnapshot = rows.filter(r=>r.saldo===null);
-
-  // Stats
-  const totalNeg = negativos.length;
-  const totalPos = positivos.length;
-  const mediaPos = positivos.length ? positivos.reduce((s,r)=>s+r.saldo,0)/positivos.length : 0;
-
-  // Snapshot bar
-  const snapBar = activeSnapshot
-    ? `<div class="bh-snap-info">
-        <div class="bh-snap-title">📸 Snapshot ativo: <strong>${fmtDate(activeSnapshot.dataReferencia)}</strong></div>
-        <div class="bh-snap-meta">Importado em ${activeSnapshot.importadoEm||'—'} · ${Object.keys(activeSnapshot.saldos||{}).length} colaboradores</div>
-       </div>`
-    : `<div class="bh-snap-info"><div class="bh-snap-none">Nenhum snapshot importado. Importe um CSV para calcular os saldos.</div></div>`;
-
-  // Alerts
-  const alertsHTML = negativos.length ? `
+  const negativos=rows.filter(r=>r.saldo!==null&&r.saldo<0);
+  const positivos=rows.filter(r=>r.saldo!==null&&r.saldo>=0);
+  const mediaPos=positivos.length?positivos.reduce((s,r)=>s+r.saldo,0)/positivos.length:0;
+  const snapBar=activeSnapshot
+    ?`<div class="bh-snap-info"><div class="bh-snap-title">📸 Snapshot ativo: <strong>${fmtDate(activeSnapshot.dataReferencia)}</strong></div><div class="bh-snap-meta">Importado em ${activeSnapshot.importadoEm||'—'} · ${Object.keys(activeSnapshot.saldos||{}).length} colaboradores</div></div>`
+    :`<div class="bh-snap-info"><div class="bh-snap-none">Nenhum snapshot importado. Importe um CSV para calcular os saldos.</div></div>`;
+  const alertsHTML=negativos.length?`
     <div class="bh-alerts">
       <div class="bh-alert-title">⚠️ Colaboradores com saldo negativo (${negativos.length})</div>
       <div class="bh-alert-grid">
-        ${negativos.map(r=>`
-          <div class="bh-alert-card">
-            <div class="bh-alert-avatar">${r.nome[0]}</div>
-            <div style="min-width:0">
-              <div class="bh-alert-name" title="${r.nome}">${r.nome}</div>
-              <div class="bh-alert-saldo">${fmtHours(Math.abs(r.saldo))} negativo</div>
-            </div>
-          </div>`).join('')}
+        ${negativos.map(r=>`<div class="bh-alert-card"><div class="bh-alert-avatar">${r.nome[0]}</div><div style="min-width:0"><div class="bh-alert-name" title="${r.nome}">${r.nome}</div><div class="bh-alert-saldo">${fmtHours(Math.abs(r.saldo))} negativo</div></div></div>`).join('')}
       </div>
-    </div>` : '';
-
-  // Table rows
-  const tableRows = rows.map(r=>`<tr>
+    </div>`:'';
+  const tableRows=rows.map(r=>`<tr>
     <td class="td-name">${r.nome}</td>
     <td class="td-muted">${r.funcao}</td>
-    <td style="text-align:center">${activeSnapshot ? fmtHours(activeSnapshot.saldos[r.nome.toUpperCase().trim()]??null) : '—'}</td>
+    <td style="text-align:center">${activeSnapshot?fmtHours(activeSnapshot.saldos[r.nome.toUpperCase().trim()]??null):'—'}</td>
     <td style="text-align:center;color:var(--danger)">${r.usado>0?'-'+fmtHours(r.usado):'—'}</td>
     <td style="text-align:center">${saldoPill(r.saldo)}</td>
   </tr>`).join('');
-
   c.innerHTML=`
-    <!-- Stats -->
     <div class="bh-top">
-      <div class="bh-stat blue"><div class="bh-stat-icon">📸</div><div class="bh-stat-label">Snapshot</div>
-        <div class="bh-stat-val" style="font-size:18px">${activeSnapshot?fmtDate(activeSnapshot.dataReferencia):'—'}</div>
-        <div class="bh-stat-sub">data de referência</div></div>
-      <div class="bh-stat green"><div class="bh-stat-icon">🟢</div><div class="bh-stat-label">Saldo Positivo</div>
-        <div class="bh-stat-val">${totalPos}</div><div class="bh-stat-sub">colaboradores</div></div>
-      <div class="bh-stat red"><div class="bh-stat-icon">🔴</div><div class="bh-stat-label">Saldo Negativo</div>
-        <div class="bh-stat-val">${totalNeg}</div><div class="bh-stat-sub">requer atenção</div></div>
-      <div class="bh-stat yellow"><div class="bh-stat-icon">⏱️</div><div class="bh-stat-label">Média (positivos)</div>
-        <div class="bh-stat-val" style="font-size:22px">${positivos.length?fmtHours(mediaPos):'—'}</div>
-        <div class="bh-stat-sub">saldo médio</div></div>
+      <div class="bh-stat blue"><div class="bh-stat-icon">📸</div><div class="bh-stat-label">Snapshot</div><div class="bh-stat-val" style="font-size:18px">${activeSnapshot?fmtDate(activeSnapshot.dataReferencia):'—'}</div><div class="bh-stat-sub">data de referência</div></div>
+      <div class="bh-stat green"><div class="bh-stat-icon">🟢</div><div class="bh-stat-label">Saldo Positivo</div><div class="bh-stat-val">${positivos.length}</div><div class="bh-stat-sub">colaboradores</div></div>
+      <div class="bh-stat red"><div class="bh-stat-icon">🔴</div><div class="bh-stat-label">Saldo Negativo</div><div class="bh-stat-val">${negativos.length}</div><div class="bh-stat-sub">requer atenção</div></div>
+      <div class="bh-stat yellow"><div class="bh-stat-icon">⏱️</div><div class="bh-stat-label">Média (positivos)</div><div class="bh-stat-val" style="font-size:22px">${positivos.length?fmtHours(mediaPos):'—'}</div><div class="bh-stat-sub">saldo médio</div></div>
     </div>
-
-    <!-- Snapshot bar -->
-    <div class="bh-snapshot-bar">
-      ${snapBar}
-      <button class="btn-bh-import" onclick="openBhImportModal()">📤 ${activeSnapshot?'Novo Snapshot':'Importar CSV'}</button>
-    </div>
-
+    <div class="bh-snapshot-bar">${snapBar}<button class="btn-bh-import" onclick="openBhImportModal()">📤 ${activeSnapshot?'Novo Snapshot':'Importar CSV'}</button></div>
     ${alertsHTML}
-
-    <!-- Table -->
     <div class="card">
-      <div class="card-header">
-        <div class="card-title">Saldo por Colaborador</div>
-        <span style="font-size:12.5px;color:var(--text3)">${activeSnapshot?`Ref: ${fmtDate(activeSnapshot.dataReferencia)}`:'Sem snapshot'}</span>
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr>
-          <th>Colaborador</th><th>Função</th>
-          <th style="text-align:center">Saldo Base (CSV)</th>
-          <th style="text-align:center">Usado após ref.</th>
-          <th style="text-align:center">Saldo Atual</th>
-        </tr></thead><tbody>${tableRows}</tbody></table>
-      </div>
+      <div class="card-header"><div class="card-title">Saldo por Colaborador</div><span style="font-size:12.5px;color:var(--text3)">${activeSnapshot?`Ref: ${fmtDate(activeSnapshot.dataReferencia)}`:'Sem snapshot'}</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Função</th><th style="text-align:center">Saldo Base (CSV)</th><th style="text-align:center">Usado após ref.</th><th style="text-align:center">Saldo Atual</th></tr></thead><tbody>${tableRows}</tbody></table></div>
     </div>`;
 }
 
-// ── CSV Import modal ──────────────────────────
 function openBhImportModal(){
   bhParsedData=null;
   const today=new Date().toISOString().slice(0,10);
@@ -2460,132 +2426,98 @@ function resetBhImport(){
   document.getElementById('bh-file-input').value='';
 }
 function handleBhDrop(e){
-  e.preventDefault();
-  document.getElementById('bh-drop-zone').classList.remove('drag');
-  const file=e.dataTransfer.files[0];
-  if(file) handleBhFile(file);
+  e.preventDefault();document.getElementById('bh-drop-zone').classList.remove('drag');
+  const file=e.dataTransfer.files[0];if(file)handleBhFile(file);
 }
 function handleBhFile(file){
-  if(!file){return;}
+  if(!file) return;
   const reader=new FileReader();
   reader.onload=ev=>processBhCSV(ev.target.result);
   reader.readAsText(file,'UTF-8');
 }
 function processBhCSV(text){
-  const msg=document.getElementById('modal-bh-msg');
-  msg.className='auth-msg';
+  const msg=document.getElementById('modal-bh-msg');msg.className='auth-msg';
   const result=parseBhCSV(text);
-  if(result.error){
-    msg.className='auth-msg error';msg.textContent='❌ '+result.error;return;
-  }
+  if(result.error){msg.className='auth-msg error';msg.textContent='❌ '+result.error;return;}
   bhParsedData=result.rows;
-  // Match against allColaboradores
   const normColab=new Set(allColaboradores.map(c=>c.nome.toUpperCase().trim()));
-  const matched=result.rows.filter(r=>normColab.has(r.nome.toUpperCase().trim())||
-    [...normColab].some(k=>k.includes(r.nome.toUpperCase().trim().substring(0,8))));
+  const matched=result.rows.filter(r=>normColab.has(r.nome.toUpperCase().trim())||[...normColab].some(k=>k.includes(r.nome.toUpperCase().trim().substring(0,8))));
   const unmatched=result.rows.filter(r=>!matched.includes(r));
-
   document.getElementById('bh-drop-zone').style.display='none';
   document.getElementById('bh-preview').style.display='block';
-  document.getElementById('bh-preview-summary').textContent=
-    `${result.rows.length} registros · Coluna: "${result.colSaldo||'Saldo BH'}" · ✅ ${matched.length} reconhecidos · ⚠️ ${unmatched.length} não encontrados`;
-
+  document.getElementById('bh-preview-summary').textContent=`${result.rows.length} registros · Coluna: "${result.colSaldo||'Saldo BH'}" · ✅ ${matched.length} reconhecidos · ⚠️ ${unmatched.length} não encontrados`;
   const rows=result.rows.map(r=>{
     const ok=normColab.has(r.nome.toUpperCase().trim())||[...normColab].some(k=>k.includes(r.nome.toUpperCase().trim().substring(0,8)));
-    const hFmt = r.horas!==null
-      ? `${r.horas<0?'−':'+'}${fmtHours(Math.abs(r.horas))}`
-      : `❌ "${r.raw}" (inválido)`;
-    return`<tr>
-      <td class="${ok?'csv-match':'csv-nomatch'}" style="font-weight:600">${ok?'✅':'⚠️'} ${r.nome}</td>
-      <td style="text-align:center">${hFmt}</td>
-    </tr>`;
+    const hFmt=r.horas!==null?`${r.horas<0?'−':'+'}${fmtHours(Math.abs(r.horas))}`:` "${r.raw}" (inválido)`;
+    return`<tr><td class="${ok?'csv-match':'csv-nomatch'}" style="font-weight:600">${ok?'✅':'⚠️'} ${r.nome}</td><td style="text-align:center">${hFmt}</td></tr>`;
   }).join('');
-  document.getElementById('bh-preview-table').innerHTML=
-    `<table><thead><tr><th>Nome</th><th style="text-align:center">Saldo</th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.getElementById('bh-preview-table').innerHTML=`<table><thead><tr><th>Nome</th><th style="text-align:center">Saldo</th></tr></thead><tbody>${rows}</tbody></table>`;
   document.getElementById('btn-bh-confirm').disabled=false;
 }
-
 async function confirmBhImport(){
   const refDate=document.getElementById('bh-ref-date').value;
   const msg=document.getElementById('modal-bh-msg');
   if(!refDate){msg.className='auth-msg error';msg.textContent='Selecione a data de referência.';return;}
   if(!bhParsedData||!bhParsedData.length){msg.className='auth-msg error';msg.textContent='Nenhum dado para importar.';return;}
-  // Build saldos map: NOME_UPPERCASE -> horas
-  const saldos={};
-  bhParsedData.forEach(r=>{if(r.horas!==null)saldos[r.nome.toUpperCase().trim()]=r.horas;});
+  const saldos={};bhParsedData.forEach(r=>{if(r.horas!==null)saldos[r.nome.toUpperCase().trim()]=r.horas;});
   const importadoEm=new Date().toLocaleString('pt-BR');
   if(IS_DEMO){
     activeSnapshot={id:'snap_demo',dataReferencia:refDate,saldos,importadoEm,criadoEm:new Date()};
-    toast('✅ Snapshot importado (demo)!','success');
-    closeBhImportModal(); renderBancoHoras(); return;
+    toast('✅ Snapshot importado (demo)!','success');closeBhImportModal();renderBancoHoras();return;
   }
   try{
     document.getElementById('btn-bh-confirm').disabled=true;
     document.getElementById('btn-bh-confirm').textContent='⏳ Salvando…';
-    await db.collection('bancohoras_snapshots').add({
-      dataReferencia:refDate, saldos,importadoEm,
-      importadoPor:currentUser.uid,
-      criadoEm:firebase.firestore.FieldValue.serverTimestamp()
-    });
+    await db.collection('bancohoras_snapshots').add({dataReferencia:refDate,saldos,importadoEm,importadoPor:currentUser.uid,criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
     await loadSnapshot();
-    toast('✅ Snapshot salvo com sucesso!','success');
-    closeBhImportModal(); renderBancoHoras();
+    toast('✅ Snapshot salvo com sucesso!','success');closeBhImportModal();renderBancoHoras();
   }catch(e){
-    console.error(e);
-    msg.className='auth-msg error';msg.textContent=`❌ ${e.message||'Erro ao salvar.'}`;
+    console.error(e);msg.className='auth-msg error';msg.textContent=`❌ ${e.message||'Erro ao salvar.'}`;
     document.getElementById('btn-bh-confirm').disabled=false;
     document.getElementById('btn-bh-confirm').textContent='Confirmar Importação';
   }
 }
 
-// ── PERMISSIONS SYSTEM ────────────────────────
-// Each permission key maps to a page/feature
-const PERMS_DEF = [
-  {key:'dashboard',    icon:'📊', label:'Dashboard',      desc:'Visão geral e estatísticas'},
-  {key:'lancamentos',  icon:'📝', label:'Lançamentos',    desc:'Criar, editar e excluir registros'},
-  {key:'relatorio',    icon:'📋', label:'Relatório',      desc:'Consultar e exportar relatórios'},
-  {key:'bancohoras',   icon:'🏦', label:'Banco de Horas', desc:'Ver saldo e importar snapshots'},
-  {key:'colaboradores',icon:'🧑‍💼', label:'Colaboradores',  desc:'Gerenciar lista de colaboradores'},
-  {key:'usuarios',     icon:'👥', label:'Usuários',       desc:'Gerenciar usuários do sistema'},
+// ── PERMISSIONS ──────────────────────────────
+const PERMS_DEF=[
+  {key:'dashboard',    icon:'📊',label:'Dashboard',      desc:'Visão geral e estatísticas'},
+  {key:'lancamentos',  icon:'📝',label:'Lançamentos',    desc:'Criar, editar e excluir registros'},
+  {key:'relatorio',    icon:'📋',label:'Relatório',      desc:'Consultar e exportar relatórios'},
+  {key:'bancohoras',   icon:'🏦',label:'Banco de Horas', desc:'Ver saldo e importar snapshots'},
+  {key:'colaboradores',icon:'🧑‍💼',label:'Colaboradores',  desc:'Gerenciar lista de colaboradores'},
+  {key:'usuarios',     icon:'👥',label:'Usuários',       desc:'Gerenciar usuários do sistema'},
 ];
-// Defaults for new users (non-admin)
-const DEFAULT_PERMS = {dashboard:true, lancamentos:true, relatorio:false, bancohoras:false, colaboradores:false, usuarios:false};
+const DEFAULT_PERMS={dashboard:true,lancamentos:true,relatorio:false,bancohoras:false,colaboradores:false,usuarios:false};
 
 function hasPermission(page){
   if(!currentUser) return false;
   if(currentUser.role==='admin') return true;
-  const p = currentUser.permissions || DEFAULT_PERMS;
-  return p[page] === true;
+  const p=currentUser.permissions||DEFAULT_PERMS;
+  return p[page]===true;
 }
-
 function updateSidebarForPerms(){
   PERMS_DEF.forEach(p=>{
-    const el=document.getElementById('nav-'+p.key);
-    if(!el) return;
+    const el=document.getElementById('nav-'+p.key);if(!el) return;
     const ok=hasPermission(p.key);
-    el.style.opacity = ok?'1':'0.38';
-    el.style.pointerEvents = ok?'':'none';
-    el.title = ok?'':('Sem permissão de acesso');
+    el.style.opacity=ok?'1':'0.38';el.style.pointerEvents=ok?'':'none';
+    el.title=ok?'':'Sem permissão de acesso';
   });
 }
 
-let editingPermUid=null, editingPermUser=null;
+let editingPermUid=null,editingPermUser=null;
 
-function openPermModal(uid, name, email, perms){
-  editingPermUid=uid; editingPermUser={uid,name,email,perms};
+function openPermModal(uid,name,email,perms){
+  editingPermUid=uid;editingPermUser={uid,name,email,perms};
   document.getElementById('perm-avatar').textContent=(name||'U')[0].toUpperCase();
   document.getElementById('perm-user-name').textContent=name||'—';
   document.getElementById('perm-user-email').textContent=email||'—';
   document.getElementById('modal-perm-msg').className='auth-msg';
-  const p = perms || DEFAULT_PERMS;
-  document.getElementById('perm-list').innerHTML = PERMS_DEF.map(def=>`
+  const p=perms||DEFAULT_PERMS;
+  document.getElementById('perm-list').innerHTML=PERMS_DEF.map(def=>`
     <div class="perm-item">
       <div class="perm-item-left">
         <span class="perm-item-icon">${def.icon}</span>
-        <div>
-          <div class="perm-item-label">${def.label}</div>
-          <div class="perm-item-desc">${def.desc}</div>
-        </div>
+        <div><div class="perm-item-label">${def.label}</div><div class="perm-item-desc">${def.desc}</div></div>
       </div>
       <div class="toggle-wrap">
         <span class="toggle-label" id="lbl-${def.key}">${p[def.key]!==false?'Sim':'Não'}</span>
@@ -2599,17 +2531,13 @@ function openPermModal(uid, name, email, perms){
   document.getElementById('modal-permissoes').classList.add('open');
 }
 function closePermModal(){document.getElementById('modal-permissoes').classList.remove('open');}
-
 async function savePermissoes(){
   const msg=document.getElementById('modal-perm-msg');
-  const newPerms={};
-  PERMS_DEF.forEach(d=>{newPerms[d.key]=document.getElementById('perm-'+d.key).checked;});
+  const newPerms={};PERMS_DEF.forEach(d=>{newPerms[d.key]=document.getElementById('perm-'+d.key).checked;});
   if(IS_DEMO){msg.className='auth-msg success';msg.textContent='✅ Permissões salvas (demo)!';setTimeout(closePermModal,1200);return;}
   try{
     await db.collection('usuarios').doc(editingPermUid).update({permissions:newPerms});
-    toast('✅ Permissões atualizadas!','success');
-    closePermModal();
-    renderUsuarios();
+    toast('✅ Permissões atualizadas!','success');closePermModal();renderUsuarios();
   }catch(e){console.error(e);msg.className='auth-msg error';msg.textContent=`❌ ${e.message||'Erro ao salvar.'}`;}
 }
 
@@ -2623,9 +2551,7 @@ async function renderUsuarios(){
       <tbody>${demoUsers.map(u=>`<tr>
         <td class="td-name">${u.name}</td><td>${u.email}</td>
         <td>${u.role==='admin'?'<span class="badge badge-blue">👑 Admin</span>':'<span class="badge badge-gray">Usuário</span>'}</td>
-        <td>${u.role==='admin'?'<span style="font-size:12px;color:var(--text3)">Acesso total</span>':
-          `<div class="perm-badge-row">${PERMS_DEF.map(p=>`<span class="perm-tag ${(u.permissions||DEFAULT_PERMS)[p.key]!==false?'':'denied'}">${p.icon} ${p.label}</span>`).join('')}</div>`}
-        </td>
+        <td>${u.role==='admin'?'<span style="font-size:12px;color:var(--text3)">Acesso total</span>':`<div class="perm-badge-row">${PERMS_DEF.map(p=>`<span class="perm-tag ${(u.permissions||DEFAULT_PERMS)[p.key]!==false?'':'denied'}">${p.icon} ${p.label}</span>`).join('')}</div>`}</td>
       </tr>`).join('')}</tbody></table></div></div>`;
     return;
   }
@@ -2635,28 +2561,17 @@ async function renderUsuarios(){
     const users=snap.docs.map(d=>({id:d.id,...d.data()}));
     const isAdmin=currentUser.role==='admin';
     c.innerHTML=`<div class="card">
-      <div class="card-header">
-        <div class="card-title">Usuários Cadastrados <span style="font-size:14px;color:var(--text2);font-weight:400">(${users.length})</span></div>
-      </div>
+      <div class="card-header"><div class="card-title">Usuários Cadastrados <span style="font-size:14px;color:var(--text2);font-weight:400">(${users.length})</span></div></div>
       <div class="table-wrap"><table>
         <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Permissões</th>${isAdmin?'<th>Ações</th>':''}</tr></thead>
         <tbody>${users.map(u=>{
           const perms=u.permissions||DEFAULT_PERMS;
-          const permBadges=u.role==='admin'
-            ?'<span style="font-size:12px;color:var(--text3)">Acesso total</span>'
-            :`<div class="perm-badge-row">${PERMS_DEF.map(p=>`<span class="perm-tag ${perms[p.key]!==false?'':'denied'}">${p.icon} ${p.label}</span>`).join('')}</div>`;
+          const permBadges=u.role==='admin'?'<span style="font-size:12px;color:var(--text3)">Acesso total</span>':`<div class="perm-badge-row">${PERMS_DEF.map(p=>`<span class="perm-tag ${perms[p.key]!==false?'':'denied'}">${p.icon} ${p.label}</span>`).join('')}</div>`;
           const actions=isAdmin?`<td><div class="row-actions">
-            ${u.role!=='admin'?`<button class="btn-xs btn-edit" onclick='openPermModal("${u.id}","${(u.name||'').replace(/"/g,'')
-}","${u.email}",${JSON.stringify(perms)})'>🔐 Permissões</button>`:''}
+            ${u.role!=='admin'?`<button class="btn-xs btn-edit" onclick='openPermModal("${u.id}","${(u.name||'').replace(/"/g,'')}","${u.email}",${JSON.stringify(perms)})'>🔐 Permissões</button>`:''}
             <button class="btn-xs ${u.role==='admin'?'btn-del':'btn-edit'}" onclick="toggleRole('${u.id}','${u.role}')">${u.role==='admin'?'Remover Admin':'Tornar Admin'}</button>
           </div></td>`:'';
-          return`<tr>
-            <td class="td-name">${u.name||'—'}</td>
-            <td>${u.email}</td>
-            <td>${u.role==='admin'?'<span class="badge badge-blue">👑 Admin</span>':'<span class="badge badge-gray">Usuário</span>'}</td>
-            <td>${permBadges}</td>
-            ${actions}
-          </tr>`;
+          return`<tr><td class="td-name">${u.name||'—'}</td><td>${u.email}</td><td>${u.role==='admin'?'<span class="badge badge-blue">👑 Admin</span>':'<span class="badge badge-gray">Usuário</span>'}</td><td>${permBadges}</td>${actions}</tr>`;
         }).join('')}</tbody>
       </table></div></div>`;
   }catch(e){c.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><p>Erro ao carregar usuários</p></div>`;}
@@ -2667,14 +2582,10 @@ async function toggleRole(uid,currentRole){
   catch(e){toast('Erro ao atualizar.','error');}
 }
 
-
 // ── TOAST ──────────────────────────────────────
 function toast(msg,type='success'){
-  const c=document.getElementById('toast-container');
-  if(!c) return;
-  const t=document.createElement('div');
-  t.className=`toast toast-${type}`;
-  t.textContent=msg;
+  const c=document.getElementById('toast-container');if(!c)return;
+  const t=document.createElement('div');t.className=`toast toast-${type}`;t.textContent=msg;
   c.appendChild(t);
   setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(30px)';t.style.transition='all .3s';setTimeout(()=>t.remove(),300);},3000);
 }
